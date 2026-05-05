@@ -1,0 +1,1 @@
+gitleaks git --staged --redact --verbose

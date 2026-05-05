@@ -1,0 +1,84 @@
+{
+  "name": "@ernestocorona/kanboard-mcp",
+  "version": "0.2.6",
+  "description": "Model Context Protocol (MCP) server for Kanboard — manage projects, tasks, columns, swimlanes, and team work from any MCP-compatible client (Claude Code, Claude Desktop, Cursor, Cline, Zed, and more).",
+  "mcpName": "io.github.ernestocorona/kanboard",
+  "type": "module",
+  "license": "MIT",
+  "author": "Ernesto Corona <ernesto.coronapaez@gmail.com>",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "main": "dist/index.js",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "bin": {
+    "kanboard-mcp": "dist/index.js"
+  },
+  "files": [
+    ".kanboard.yaml.example",
+    ".env.example",
+    "dist/",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ErnestoCorona/kanboard-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ErnestoCorona/kanboard-mcp/issues"
+  },
+  "homepage": "https://github.com/ErnestoCorona/kanboard-mcp#readme",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "kanboard",
+    "kanban",
+    "task-management",
+    "project-management",
+    "claude",
+    "ai-agents",
+    "agentic-tools",
+    "json-rpc",
+    "scrum",
+    "agile",
+    "productivity"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --project unit",
+    "test:unit": "vitest run tests/unit",
+    "test:int": "RUN_INTEGRATION=1 vitest run tests/integration",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "selftest": "tsx src/cli/selftest.ts",
+    "prepublishOnly": "npm run build",
+    "prepare": "husky"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "pino": "^9.6.0",
+    "yaml": "^2.7.1",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.18",
+    "eslint": "^9.26.0",
+    "husky": "^9.1.7",
+    "prettier": "^3.5.3",
+    "tsup": "^8.4.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.32.0",
+    "undici": "^7.10.0",
+    "vitest": "^4.1.5"
+  }
+}

@@ -1,0 +1,14 @@
+title = "kanboard-mcp gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Global allowlist"
+paths = [
+  '''node_modules/''',
+  '''package-lock\.json''',
+  '''dist/''',
+  '''coverage/''',
+  '''\.husky/_/''',
+]

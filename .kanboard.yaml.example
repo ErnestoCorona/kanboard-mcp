@@ -1,0 +1,39 @@
+# .kanboard.yaml — Per-project Kanboard context file
+#
+# Place this file at the root of your project (or any parent directory up to
+# the git root / $HOME). The kanboard-mcp server walks up from the current
+# working directory and uses the first .kanboard.yaml it finds.
+#
+# Rename this file to .kanboard.yaml and fill in your values.
+#
+# IMPORTANT: exactly ONE of project_id or project_identifier must be present.
+# Supplying both or neither is a configuration error.
+
+# Option A: numeric Kanboard project ID.
+# Find it in the Kanboard UI: Settings → Projects → the "ID" column, or in
+# the URL when viewing a project: /project/<id>/
+# project_id: 12
+
+# Option B: short project identifier (the uppercase slug set on project creation).
+# Visible in Kanboard UI: Project settings → Identifier.
+# Example: "MYPROJ", "BACKEND", "INFRA"
+# project_identifier: MYPROJ
+
+# ---------------------------------------------------------------------------
+# Optional defaults (applied when the corresponding tool argument is absent)
+# ---------------------------------------------------------------------------
+
+# Default swimlane ID used by move_task_position when no swimlane_id argument
+# is supplied and no explicit swimlane is configured on the task.
+# Falls through to the first active swimlane if unset.
+# default_swimlane_id: 1
+
+# Default column ID used when creating or moving tasks without an explicit
+# column_id or column_name argument.
+# default_column_id: 2
+
+# Default owner (user) ID assigned to new tasks when owner_id is omitted.
+# default_owner_id: 5
+
+# Default category ID assigned to new tasks when category_id is omitted.
+# default_category_id: 3

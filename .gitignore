@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# MCP local config (contains credentials — never commit)
+.mcp.json
+
+# Local Kanboard project binding (contains user-specific project_id)
+.kanboard.yaml
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+
+# Cache and temp
+.cache/
+.temp/
+.tsup/
+.atl/
+
+# Claude Code personal overrides (do not commit — shared ones go in .claude/settings.json)
+.claude/settings.local.json
