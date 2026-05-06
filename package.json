@@ -1,6 +1,6 @@
 {
   "name": "@ernestocorona/kanboard-mcp",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Model Context Protocol (MCP) server for Kanboard — manage projects, tasks, columns, swimlanes, and team work from any MCP-compatible client (Claude Code, Claude Desktop, Cursor, Cline, Zed, and more).",
   "mcpName": "io.github.ernestocorona/kanboard",
   "type": "module",

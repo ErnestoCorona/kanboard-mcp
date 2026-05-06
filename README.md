@@ -257,6 +257,19 @@ All test entities are prefixed `[TEST-{ISO-timestamp}]` and tracked for manual o
 
 The repo uses [husky](https://typicode.github.io/husky/) + [gitleaks](https://github.com/gitleaks/gitleaks) to block commits containing secrets. Run `npm install` once after cloning to install hooks.
 
+## Troubleshooting
+
+### `npm run selftest` exit-code propagation under `tsx`
+
+`scripts/preflight.sh` runs `npm run selftest`, which delegates to `tsx src/cli/selftest.ts`. On some host setups, `tsx` (invoked through the npm wrapper) does not always propagate a non-zero `process.exit(N)` from the script back to the parent shell — so `preflight.sh` may report exit 0 even when the selftest actually failed internally.
+
+This is a pre-existing `tsx`/`npm` behaviour, not specific to kanboard-mcp. Workarounds:
+
+- Re-run `scripts/preflight.sh` two or three times before `npm publish` and confirm a clean run each time.
+- Or check the selftest output explicitly for the `selftest pass` line on stderr before trusting the exit code.
+
+If you need a hard guarantee, run `npx tsx src/cli/selftest.ts` directly (without the npm wrapper) — that path tends to propagate exit codes more reliably.
+
 ## Roadmap
 
 - **v0.2.6** (next): quality cycle — bug fixes from the v0.2 backlog, including a non-admin-friendly `list_users` (uses `getMembers` instead of `getAllUsers`) and a small breaking change to align field names with the spec

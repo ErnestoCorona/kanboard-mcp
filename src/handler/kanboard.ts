@@ -991,6 +991,17 @@ export class KanboardHandler {
     decodeMutation("removeSwimlane", raw);
   }
 
+  /**
+   * Permanently removes a column from a project.
+   * Kanboard's wire param for this method is `column_id`.
+   * @throws {KanboardApiError} when Kanboard returns false.
+   */
+  public async removeColumn(columnId: number): Promise<void> {
+    const raw = await this.#apiClient.call("removeColumn", { column_id: columnId });
+    this.#logger.debug({ method: "removeColumn" }, "removeColumn OK");
+    decodeMutation("removeColumn", raw);
+  }
+
   // ─── Destructive operations ───────────────────────────────────────────────
 
   /**

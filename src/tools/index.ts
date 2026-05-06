@@ -43,6 +43,7 @@ import { createSubtaskTool } from "./create-subtask.js";
 import { createSwimlaneTool } from "./create-swimlane.js";
 import { createTaskTool } from "./create-task.js";
 import { createTasksBatchTool } from "./create-tasks-batch.js";
+import { deleteColumnTool } from "./delete-column.js";
 import { deleteCommentTool } from "./delete-comment.js";
 import { deleteProjectTool } from "./delete-project.js";
 import { deleteSubtaskTool } from "./delete-subtask.js";
@@ -84,6 +85,7 @@ export { createSubtaskTool } from "./create-subtask.js";
 export { createSwimlaneTool } from "./create-swimlane.js";
 export { createTaskTool } from "./create-task.js";
 export { createTasksBatchTool } from "./create-tasks-batch.js";
+export { deleteColumnTool } from "./delete-column.js";
 export { deleteCommentTool } from "./delete-comment.js";
 export { deleteProjectTool } from "./delete-project.js";
 export { deleteSubtaskTool } from "./delete-subtask.js";
@@ -149,7 +151,7 @@ export interface ToolDef {
 // ---------------------------------------------------------------------------
 
 /**
- * All 36 Kanboard MCP tools in alphabetical order.
+ * All 37 Kanboard MCP tools in alphabetical order.
  *
  * Order is fixed so that any slice/comparison in tests and transports is
  * deterministic across environments.
@@ -164,6 +166,7 @@ export const allTools: readonly ToolDef[] = [
   createSwimlaneTool,
   createTaskTool,
   createTasksBatchTool,
+  deleteColumnTool,
   deleteCommentTool,
   deleteProjectTool,
   deleteSubtaskTool,

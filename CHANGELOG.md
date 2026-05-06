@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] — 2026-05-06
+
+### Added
+
+- `delete_column` — destructive MCP tool for permanent column removal. Confirm-gated via `confirm: z.literal(true)` + `assertConfirmed("delete_column", ...)`. Resolves `project_id` via `getColumn` for resolver invalidation (NFR-9). Mirrors the `delete_swimlane` pattern.
+- `KanboardHandler.removeColumn(column_id)` — JSON-RPC wrapper for Kanboard's `removeColumn` method (wire param `column_id`). Closes the column-deletion gap that left v0.3.0's integration tracker drain warn-only.
+
+### Changed
+
+- `tests/integration/_helpers/cleanup.ts` columns tier now actually deletes via `handler.removeColumn` (was warn-only in v0.3.0). The `afterAll` drain in `kanboard.int.test.ts` integrates columns into the FK-ordered tier sequence (comments → files → subtasks → tasks → swimlanes → columns → projects) using the standard `drainTier` helper.
+- Total registered MCP tools 36 → 37 (`allTools` array in `src/tools/index.ts`). Tool-count assertions in `tests/unit/tools/index.test.ts` and `tests/unit/transports/bootstrap.test.ts` updated.
+
+### Fixed
+
+- Closes the warn-only branch in the integration `afterAll` cleanup (verify-report SUGGESTION 1 from v0.3.0). Spec scenario "afterAll calls delete_task × N and delete_column × M" now fully exercised — no more deferred column-cleanup branch.
+
+### Docs
+
+- README — new "Troubleshooting" section documents the pre-existing `tsx`/`npx` exit-code propagation quirk (`process.exit(1)` may not propagate through the tsx wrapper, so `scripts/preflight.sh` may report exit 0 even when `npm run selftest` failed internally). Workaround: re-run preflight 2–3 times before publish, or check the script output explicitly for `selftest pass`. Not specific to kanboard-mcp (verify-report SUGGESTION 2 from v0.3.0).
+
+### Reference
+
+SDD change: `mcp-kanboard-v0.3.1-removecolumn-patch` (engram topic family `sdd/mcp-kanboard-v0.3.1-removecolumn-patch/*`). Condensed mini-cycle — single-batch apply addressing v0.3.0 verify-report suggestions.
+
 ## [0.3.0] — 2026-05-06
 
 ### Breaking changes — input renames (no aliases)
@@ -136,6 +160,7 @@ SDD change: `mcp-kanboard-v0.3.0-public-ready` (engram topic family `sdd/mcp-kan
 - Integration tests against a live Kanboard instance have not been executed; OQ-01 (JSON-RPC batch support) is verified by harness but pending real-instance confirmation.
 - 7 backlog items deferred to v0.2 — see `v0.2-backlog.md`.
 
+[0.3.1]: https://github.com/ErnestoCorona/kanboard-mcp/releases/tag/v0.3.1
 [0.3.0]: https://github.com/ErnestoCorona/kanboard-mcp/releases/tag/v0.3.0
 [0.2.6]: https://github.com/ErnestoCorona/kanboard-mcp/releases/tag/v0.2.6
 [0.2.5]: https://github.com/ErnestoCorona/kanboard-mcp/releases/tag/v0.2.5

@@ -120,8 +120,7 @@ beforeAll(async () => {
 //   3. subtasks    → depend on tasks
 //   4. tasks       → depend on columns + swimlanes + projects
 //   5. swimlanes   → depend on projects
-//   6. columns     → depend on projects (no removeColumn handler in v0.3 —
-//                    tracked but skipped; sandbox cleanup script handles it)
+//   6. columns     → depend on projects (removeColumn handler added in v0.3.1)
 //   7. projects    → root
 //
 // Each delete is wrapped in try/catch and logs structured warnings on failure.
@@ -139,16 +138,7 @@ afterAll(async () => {
   await drainTier("removeSwimlane", tracker.swimlanes, (swimlane_id) =>
     handler.removeSwimlane({ project_id: projectId, swimlane_id }),
   );
-
-  // Columns: no removeColumn handler in v0.3 (design ADR: columns persist).
-  // Still tracked for symmetry; sandbox cleanup script drains them.
-  if (tracker.columns.size > 0) {
-    console.warn(
-      `[afterAll cleanup] ${String(tracker.columns.size)} column(s) tracked but not deleted ` +
-        "(no removeColumn handler in v0.3 — sandbox cleanup script handles them).",
-    );
-  }
-
+  await drainTier("removeColumn", tracker.columns, (id) => handler.removeColumn(id));
   await drainTier("removeProject", tracker.projects, (id) => handler.removeProject(id));
 }, 60_000);
 
