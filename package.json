@@ -70,6 +70,8 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@commitlint/cli": "^20.5.3",
+    "@commitlint/config-conventional": "^20.5.3",
     "@types/node": "^22.15.18",
     "eslint": "^9.26.0",
     "husky": "^9.1.7",
