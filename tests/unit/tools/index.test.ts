@@ -3,14 +3,14 @@
  *
  * Strategy:
  * - `allTools` structural assertions (length, names, required fields).
- * - `registerTools` mock-server assertions (registerTool called 31×, correct names).
+ * - `registerTools` mock-server assertions (registerTool called 36×, correct names).
  * - No real McpServer or KanboardHandler constructed — fully mocked.
  *
  * Cases covered:
- * 1. allTools has exactly 31 entries.
- * 2. All 31 expected tool names are present.
+ * 1. allTools has exactly 36 entries.
+ * 2. All 36 expected tool names are present.
  * 3. Each tool has name, description, inputSchema, and handler defined.
- * 4. registerTools calls server.registerTool exactly 31 times.
+ * 4. registerTools calls server.registerTool exactly 36 times.
  * 5. registerTools registers each tool by its correct name.
  * 6. The registered callback delegates to the tool handler with (args, deps).
  */
@@ -32,11 +32,13 @@ const EXPECTED_NAMES = [
   "create_comment",
   "create_project",
   "create_subtask",
+  "create_swimlane",
   "create_task",
   "create_tasks_batch",
   "delete_comment",
   "delete_project",
   "delete_subtask",
+  "delete_swimlane",
   "delete_task",
   "delete_task_file",
   "get_project",
@@ -51,11 +53,14 @@ const EXPECTED_NAMES = [
   "list_tasks",
   "list_project_users",
   "move_column",
+  "move_swimlane",
   "move_task_position",
   "remove_project_user",
   "update_column",
+  "update_comment",
   "update_project",
   "update_subtask",
+  "update_swimlane",
   "update_task",
 ] as const;
 
@@ -73,11 +78,11 @@ const mockDeps: ToolDeps = {
 // ---------------------------------------------------------------------------
 
 describe("allTools — structure", () => {
-  it("has exactly 31 tools", () => {
-    expect(allTools).toHaveLength(31);
+  it("has exactly 36 tools", () => {
+    expect(allTools).toHaveLength(36);
   });
 
-  it("contains all 31 expected tool names", () => {
+  it("contains all 36 expected tool names", () => {
     const names = allTools.map((t) => t.name);
     expect(names).toEqual(expect.arrayContaining([...EXPECTED_NAMES]));
   });
@@ -115,12 +120,12 @@ describe("registerTools — server registration", () => {
     };
   }
 
-  it("calls server.registerTool exactly 31 times", () => {
+  it("calls server.registerTool exactly 36 times", () => {
     const server = buildMockServer();
 
     registerTools(server as never, mockDeps);
 
-    expect(server.registerTool).toHaveBeenCalledTimes(31);
+    expect(server.registerTool).toHaveBeenCalledTimes(36);
   });
 
   it("registers each tool by its correct name (first arg)", () => {
@@ -133,7 +138,7 @@ describe("registerTools — server registration", () => {
     );
 
     expect(registeredNames).toEqual(expect.arrayContaining([...EXPECTED_NAMES]));
-    expect(registeredNames).toHaveLength(31);
+    expect(registeredNames).toHaveLength(36);
   });
 
   it("passes description and inputSchema in the config object (second arg)", () => {

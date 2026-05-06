@@ -40,11 +40,13 @@ import { createColumnTool } from "./create-column.js";
 import { createCommentTool } from "./create-comment.js";
 import { createProjectTool } from "./create-project.js";
 import { createSubtaskTool } from "./create-subtask.js";
+import { createSwimlaneTool } from "./create-swimlane.js";
 import { createTaskTool } from "./create-task.js";
 import { createTasksBatchTool } from "./create-tasks-batch.js";
 import { deleteCommentTool } from "./delete-comment.js";
 import { deleteProjectTool } from "./delete-project.js";
 import { deleteSubtaskTool } from "./delete-subtask.js";
+import { deleteSwimlaneTool } from "./delete-swimlane.js";
 import { deleteTaskTool } from "./delete-task.js";
 import { deleteTaskFileTool } from "./delete-task-file.js";
 import { getProjectTool } from "./get-project.js";
@@ -59,11 +61,14 @@ import { listSwimlanesTool } from "./list-swimlanes.js";
 import { listTasksTool } from "./list-tasks.js";
 import { listProjectUsersTool } from "./list-project-users.js";
 import { moveColumnTool } from "./move-column.js";
+import { moveSwimlaneTool } from "./move-swimlane.js";
 import { moveTaskPositionTool } from "./move-task-position.js";
 import { removeProjectUserTool } from "./remove-project-user.js";
 import { updateColumnTool } from "./update-column.js";
+import { updateCommentTool } from "./update-comment.js";
 import { updateProjectTool } from "./update-project.js";
 import { updateSubtaskTool } from "./update-subtask.js";
+import { updateSwimlaneTool } from "./update-swimlane.js";
 import { updateTaskTool } from "./update-task.js";
 
 // ---------------------------------------------------------------------------
@@ -76,11 +81,13 @@ export { createColumnTool } from "./create-column.js";
 export { createCommentTool } from "./create-comment.js";
 export { createProjectTool } from "./create-project.js";
 export { createSubtaskTool } from "./create-subtask.js";
+export { createSwimlaneTool } from "./create-swimlane.js";
 export { createTaskTool } from "./create-task.js";
 export { createTasksBatchTool } from "./create-tasks-batch.js";
 export { deleteCommentTool } from "./delete-comment.js";
 export { deleteProjectTool } from "./delete-project.js";
 export { deleteSubtaskTool } from "./delete-subtask.js";
+export { deleteSwimlaneTool } from "./delete-swimlane.js";
 export { deleteTaskTool } from "./delete-task.js";
 export { deleteTaskFileTool } from "./delete-task-file.js";
 export { getProjectTool } from "./get-project.js";
@@ -95,11 +102,14 @@ export { listSwimlanesTool } from "./list-swimlanes.js";
 export { listTasksTool } from "./list-tasks.js";
 export { listProjectUsersTool } from "./list-project-users.js";
 export { moveColumnTool } from "./move-column.js";
+export { moveSwimlaneTool } from "./move-swimlane.js";
 export { moveTaskPositionTool } from "./move-task-position.js";
 export { removeProjectUserTool } from "./remove-project-user.js";
 export { updateColumnTool } from "./update-column.js";
+export { updateCommentTool } from "./update-comment.js";
 export { updateProjectTool } from "./update-project.js";
 export { updateSubtaskTool } from "./update-subtask.js";
+export { updateSwimlaneTool } from "./update-swimlane.js";
 export { updateTaskTool } from "./update-task.js";
 
 // ---------------------------------------------------------------------------
@@ -139,7 +149,7 @@ export interface ToolDef {
 // ---------------------------------------------------------------------------
 
 /**
- * All 31 Kanboard MCP tools in alphabetical order.
+ * All 36 Kanboard MCP tools in alphabetical order.
  *
  * Order is fixed so that any slice/comparison in tests and transports is
  * deterministic across environments.
@@ -151,11 +161,13 @@ export const allTools: readonly ToolDef[] = [
   createCommentTool,
   createProjectTool,
   createSubtaskTool,
+  createSwimlaneTool,
   createTaskTool,
   createTasksBatchTool,
   deleteCommentTool,
   deleteProjectTool,
   deleteSubtaskTool,
+  deleteSwimlaneTool,
   deleteTaskTool,
   deleteTaskFileTool,
   getProjectTool,
@@ -170,11 +182,14 @@ export const allTools: readonly ToolDef[] = [
   listTasksTool,
   listProjectUsersTool,
   moveColumnTool,
+  moveSwimlaneTool,
   moveTaskPositionTool,
   removeProjectUserTool,
   updateColumnTool,
+  updateCommentTool,
   updateProjectTool,
   updateSubtaskTool,
+  updateSwimlaneTool,
   updateTaskTool,
 ] as const;
 
