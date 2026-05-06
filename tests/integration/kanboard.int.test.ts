@@ -26,11 +26,32 @@
  *   the create_tasks_batch killer feature.
  */
 
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { writeFileSync, mkdtempSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { handler, bundle, projectId } from "./setup.js";
+import {
+  createTracker,
+  drainTier,
+  trackTask,
+  trackSubtask,
+  trackComment,
+  trackFile,
+  trackColumn,
+} from "./_helpers/cleanup.js";
+
+// ---------------------------------------------------------------------------
+// File-level resource tracker (orchestrator-correction #4 — `files` included).
+//
+// Every successful create in this suite registers the resulting id via a
+// `track*` helper. A single `afterAll` below drains the tracker in
+// FK-dependency order. Each delete is wrapped in try/catch — failures are
+// logged but NEVER thrown, so a botched delete cannot mask earlier
+// `it()` failures.
+// ---------------------------------------------------------------------------
+
+const tracker = createTracker();
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -87,7 +108,49 @@ beforeAll(async () => {
     column_id: firstColumnId,
     swimlane_id: firstSwimlaneId,
   });
+  trackTask(tracker, parentTaskId);
 }, 30_000);
+
+// ---------------------------------------------------------------------------
+// File-level cleanup — drains the tracker in FK-dependency order.
+//
+// Order rationale (children before parents):
+//   1. comments    → depend on tasks
+//   2. files       → depend on tasks
+//   3. subtasks    → depend on tasks
+//   4. tasks       → depend on columns + swimlanes + projects
+//   5. swimlanes   → depend on projects
+//   6. columns     → depend on projects (no removeColumn handler in v0.3 —
+//                    tracked but skipped; sandbox cleanup script handles it)
+//   7. projects    → root
+//
+// Each delete is wrapped in try/catch and logs structured warnings on failure.
+// We never throw from afterAll — a cleanup miss must NOT mask earlier test
+// failures.
+// ---------------------------------------------------------------------------
+
+afterAll(async () => {
+  // FK-ordered drain — children before parents. Each tier runs concurrently
+  // (all ids deleted in parallel) but tiers run sequentially.
+  await drainTier("removeComment", tracker.comments, (id) => handler.removeComment(id));
+  await drainTier("removeTaskFile", tracker.files, (id) => handler.removeTaskFile(id));
+  await drainTier("removeSubtask", tracker.subtasks, (id) => handler.removeSubtask(id));
+  await drainTier("removeTask", tracker.tasks, (id) => handler.removeTask(id));
+  await drainTier("removeSwimlane", tracker.swimlanes, (swimlane_id) =>
+    handler.removeSwimlane({ project_id: projectId, swimlane_id }),
+  );
+
+  // Columns: no removeColumn handler in v0.3 (design ADR: columns persist).
+  // Still tracked for symmetry; sandbox cleanup script drains them.
+  if (tracker.columns.size > 0) {
+    console.warn(
+      `[afterAll cleanup] ${String(tracker.columns.size)} column(s) tracked but not deleted ` +
+        "(no removeColumn handler in v0.3 — sandbox cleanup script handles them).",
+    );
+  }
+
+  await drainTier("removeProject", tracker.projects, (id) => handler.removeProject(id));
+}, 60_000);
 
 // ---------------------------------------------------------------------------
 // Projects (read-only)
@@ -140,6 +203,7 @@ describe("tasks CRUD", () => {
         column_id: firstColumnId,
         swimlane_id: firstSwimlaneId,
       });
+      trackTask(tracker, createdTaskId);
 
       expect(createdTaskId).toBeGreaterThan(0);
     },
@@ -266,6 +330,7 @@ describe("bulk (OQ-01 — create_tasks_batch)", () => {
       for (const entry of result.created) {
         expect(entry.task_id).toBeGreaterThan(0);
         expect(entry.title).toContain(prefix);
+        trackTask(tracker, entry.task_id);
       }
 
       // Indices must be in order [0, 1, 2].
@@ -318,6 +383,7 @@ describe("attachments", () => {
           `createTaskFile failed: ${err instanceof Error ? err.message : String(err)}`,
         );
       }
+      trackFile(tracker, fileId);
 
       expect(fileId).toBeGreaterThan(0);
     },
@@ -339,6 +405,7 @@ describe("comments and subtasks", () => {
         task_id: parentTaskId,
         content: `Integration test comment — ${new Date().toISOString()}`,
       });
+      trackComment(tracker, commentId);
 
       expect(commentId).toBeGreaterThan(0);
     },
@@ -354,6 +421,7 @@ describe("comments and subtasks", () => {
         task_id: parentTaskId,
         title: testTitle("integration subtask"),
       });
+      trackSubtask(tracker, subtaskId);
 
       expect(subtaskId).toBeGreaterThan(0);
     },
@@ -512,6 +580,7 @@ describe("columns — create_column, update_column, move_column", () => {
         task_limit: 2,
         description: "Created by kanboard.int.test.ts v0.2.5 suite.",
       });
+      trackColumn(tracker, createdColumnId);
 
       expect(createdColumnId).toBeGreaterThan(0);
 

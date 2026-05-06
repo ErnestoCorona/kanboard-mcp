@@ -61,6 +61,21 @@ const BatchTaskItemSchema = z
       .optional()
       .describe("Swimlane id. Falls back to .kanboard.yaml default_swimlane_id."),
     priority: z.number().optional().describe("Task priority."),
+    creator_id: z
+      .number()
+      .int()
+      .positive()
+      .optional()
+      .describe("Creator user id."),
+    score: z.number().int().optional().describe("Task complexity score."),
+    date_started: z
+      .union([z.string(), z.number().int(), z.null()])
+      .optional()
+      .describe(
+        "Start date as ISO 8601 string, Unix epoch seconds (integer), or null to clear.",
+      ),
+    tags: z.array(z.string()).optional().describe("Array of tag strings."),
+    reference: z.string().optional().describe("External reference (e.g. issue URL)."),
   })
   .strict();
 
@@ -135,12 +150,20 @@ export const createTasksBatchTool = {
     //    date_due is converted from ISO 8601 / epoch number to epoch seconds.
     const mergedItems: BatchCreateTasksItem[] = input.tasks.map((item) => {
       const dateDueEpoch = isoToEpoch(item.date_due, "date_due");
+      const dateStartedEpoch = isoToEpoch(item.date_started, "date_started");
       return {
         title: item.title,
         ...(item.description !== undefined ? { description: item.description } : {}),
         ...(item.color_id !== undefined ? { color_id: item.color_id } : {}),
         ...(dateDueEpoch !== undefined && dateDueEpoch !== null ? { date_due: dateDueEpoch } : {}),
         ...(item.priority !== undefined ? { priority: item.priority } : {}),
+        ...(item.creator_id !== undefined ? { creator_id: item.creator_id } : {}),
+        ...(item.score !== undefined ? { score: item.score } : {}),
+        ...(dateStartedEpoch !== undefined && dateStartedEpoch !== null
+          ? { date_started: dateStartedEpoch }
+          : {}),
+        ...(item.tags !== undefined ? { tags: item.tags } : {}),
+        ...(item.reference !== undefined ? { reference: item.reference } : {}),
         // Apply yaml defaults for nullable FK fields
         column_id: item.column_id ?? ctx.defaults.columnId,
         owner_id: item.owner_id ?? ctx.defaults.ownerId,

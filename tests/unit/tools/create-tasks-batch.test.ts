@@ -463,4 +463,144 @@ describe("create_tasks_batch tool", () => {
     const [, items] = firstCall;
     expect(items[0]?.date_due).toBe(epochSeconds);
   });
+
+  // ── v0.3.0: extended fields (creator_id, score, date_started, tags, reference) ─
+
+  it("forwards extended fields (creator_id, score, date_started, tags, reference) to handler when present", async () => {
+    const batchResult: BatchCreateTasksResult = {
+      created: [{ index: 0, task_id: 900, title: "Extended" }],
+      failed: [],
+    };
+    const { handler, resolvers, createTasksBatchMock } = buildMockDeps({ batchResult });
+    const isoStart = "2026-06-15T08:00:00.000Z";
+    const expectedStartEpoch = Math.floor(new Date(isoStart).getTime() / 1000);
+
+    await createTasksBatchTool.handler(
+      {
+        project_id: 12,
+        tasks: [
+          {
+            title: "Extended",
+            creator_id: 7,
+            score: 5,
+            date_started: isoStart,
+            tags: ["alpha", "beta"],
+            reference: "https://example.com/issue/42",
+          },
+        ],
+      },
+      { handler, resolvers },
+    );
+
+    const firstCall = createTasksBatchMock.mock.calls[0] as [number, BatchCreateTasksItem[]];
+    const [, items] = firstCall;
+    const item = items[0];
+    expect(item?.creator_id).toBe(7);
+    expect(item?.score).toBe(5);
+    expect(item?.date_started).toBe(expectedStartEpoch);
+    expect(item?.tags).toEqual(["alpha", "beta"]);
+    expect(item?.reference).toBe("https://example.com/issue/42");
+  });
+
+  it("omits extended fields entirely when absent (backward-compatible)", async () => {
+    const batchResult: BatchCreateTasksResult = {
+      created: [{ index: 0, task_id: 901, title: "Bare" }],
+      failed: [],
+    };
+    const { handler, resolvers, createTasksBatchMock } = buildMockDeps({ batchResult });
+
+    await createTasksBatchTool.handler(
+      { project_id: 12, tasks: [{ title: "Bare" }] },
+      { handler, resolvers },
+    );
+
+    const firstCall = createTasksBatchMock.mock.calls[0] as [number, BatchCreateTasksItem[]];
+    const [, items] = firstCall;
+    const item = items[0];
+    expect(item?.creator_id).toBeUndefined();
+    expect(item?.score).toBeUndefined();
+    expect(item?.date_started).toBeUndefined();
+    expect(item?.tags).toBeUndefined();
+    expect(item?.reference).toBeUndefined();
+  });
+
+  it("handles a mixed batch — some items with extended fields, others without", async () => {
+    const batchResult: BatchCreateTasksResult = {
+      created: [
+        { index: 0, task_id: 910, title: "With ext" },
+        { index: 1, task_id: 911, title: "No ext" },
+        { index: 2, task_id: 912, title: "Partial ext" },
+      ],
+      failed: [],
+    };
+    const { handler, resolvers, createTasksBatchMock } = buildMockDeps({ batchResult });
+
+    await createTasksBatchTool.handler(
+      {
+        project_id: 12,
+        tasks: [
+          {
+            title: "With ext",
+            creator_id: 3,
+            score: 8,
+            tags: ["urgent"],
+            reference: "REF-1",
+          },
+          { title: "No ext" },
+          { title: "Partial ext", score: 2, tags: [] },
+        ],
+      },
+      { handler, resolvers },
+    );
+
+    const firstCall = createTasksBatchMock.mock.calls[0] as [number, BatchCreateTasksItem[]];
+    const [, items] = firstCall;
+
+    expect(items[0]?.creator_id).toBe(3);
+    expect(items[0]?.score).toBe(8);
+    expect(items[0]?.tags).toEqual(["urgent"]);
+    expect(items[0]?.reference).toBe("REF-1");
+
+    expect(items[1]?.creator_id).toBeUndefined();
+    expect(items[1]?.score).toBeUndefined();
+    expect(items[1]?.tags).toBeUndefined();
+    expect(items[1]?.reference).toBeUndefined();
+
+    expect(items[2]?.creator_id).toBeUndefined();
+    expect(items[2]?.score).toBe(2);
+    expect(items[2]?.tags).toEqual([]);
+  });
+
+  it("rejects negative creator_id (positive int constraint)", async () => {
+    const { handler, resolvers, createTasksBatchMock } = buildMockDeps();
+
+    await expect(
+      createTasksBatchTool.handler(
+        { project_id: 12, tasks: [{ title: "Bad", creator_id: -1 }] },
+        { handler, resolvers },
+      ),
+    ).rejects.toThrow();
+
+    expect(createTasksBatchMock).not.toHaveBeenCalled();
+  });
+
+  it("converts ISO 8601 date_started string to epoch seconds for batch items", async () => {
+    const batchResult: BatchCreateTasksResult = {
+      created: [{ index: 0, task_id: 920, title: "Started" }],
+      failed: [],
+    };
+    const { handler, resolvers, createTasksBatchMock } = buildMockDeps({ batchResult });
+    const iso = "2026-07-01T12:00:00.000Z";
+    const expectedEpoch = Math.floor(new Date(iso).getTime() / 1000);
+
+    await createTasksBatchTool.handler(
+      { project_id: 12, tasks: [{ title: "Started", date_started: iso }] },
+      { handler, resolvers },
+    );
+
+    const firstCall = createTasksBatchMock.mock.calls[0] as [number, BatchCreateTasksItem[]];
+    const [, items] = firstCall;
+    expect(items[0]?.date_started).toBe(expectedEpoch);
+    expect(typeof items[0]?.date_started).toBe("number");
+  });
 });

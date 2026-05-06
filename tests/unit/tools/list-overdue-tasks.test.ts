@@ -18,7 +18,7 @@
  * - default scope is "mine" (no input)
  * - empty array result
  * - content text is JSON
- * - Zod refine: scope="project" is allowed even without explicit project args (yaml fallback)
+ * - scope="project" is allowed even without explicit project args (yaml fallback)
  * - Zod: extra fields rejected (.strict())
  * - handler errors propagated per branch
  */

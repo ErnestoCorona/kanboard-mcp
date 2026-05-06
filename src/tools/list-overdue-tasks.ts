@@ -46,16 +46,7 @@ export const ListOverdueTasksInput = z
         'Required when scope="project": Kanboard project identifier string (overrides .kanboard.yaml).',
       ),
   })
-  .strict()
-  .refine(
-    () => {
-      // When scope is "project" we need project context — but we allow yaml fallback
-      // so we cannot enforce project_id here (yaml might provide it). Allow any combo.
-      // When scope is NOT "project", project_id/project_identifier are ignored (not errors).
-      return true;
-    },
-    { message: "Invalid scope/project combination." },
-  );
+  .strict();
 
 export type ListOverdueTasksInput = z.infer<typeof ListOverdueTasksInput>;
 

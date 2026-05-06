@@ -97,6 +97,7 @@ export interface BatchCreateTasksItem {
   tags?: string[] | undefined;
   /** Unix epoch seconds — already converted from ISO 8601 input by the tool layer. */
   date_started?: number | undefined;
+  creator_id?: number | undefined;
 }
 
 /**
