@@ -2,22 +2,30 @@
 /**
  * Board hygiene — `scripts/board-hygiene.ts`
  *
- * Closes a curated list of stale-but-done Kanboard cards in project 126.
- * Each card receives a one-line comment BEFORE being closed so the audit
- * trail explains the bulk action.
+ * For a curated list of stale-but-done Kanboard cards in project 126:
+ *   1. Adds a one-line audit comment.
+ *   2. Moves the card to the "Erledigt" column (id 599) so visual board
+ *      state matches logical state — Kanboard `closeTask` only flips
+ *      `is_active`, it does NOT move the card; without this step a closed
+ *      card stays in Backlog/Bereit and only appears under "show closed".
+ *   3. Closes the card via `closeTask`.
  *
  * Closure path:
- *   1. Probe `closeTask` once via `handler.closeTask(probeId)`. Standard
- *      Kanboard installs expose this JSON-RPC method.
+ *   1. Probe `closeTask` once via `handler.closeTask(probeId)`.
  *   2. On `closeTask` success → use it for every remaining card.
- *   3. On `closeTask` failure → log the failure mode and fall back to
- *      a raw JSON-RPC `update_task({id, is_active: 0})` call (Kanboard's
- *      wire-level "close" is `is_active: 0`; our `update_task` MCP tool does
- *      not accept this field by design, so we go directly to the api-client).
+ *   3. On `closeTask` failure → fall back to a raw JSON-RPC
+ *      `update_task({id, is_active: 0})` call.
  *
- * This script is one-shot; re-running on already-closed cards will produce
- * `KanboardApiError` per attempt (Kanboard rejects closing a closed task) —
- * those are logged warn-only and the script exits 0.
+ * Move failures are logged warn-only and do NOT abort the close — the
+ * card will still close, it just stays in its original column.
+ *
+ * This script is idempotent: re-running on already-closed cards produces
+ * KanboardApiError on closeTask (Kanboard rejects closing a closed task);
+ * the move step is also tolerant of cards that already live in Erledigt.
+ *
+ * TODO(v0.3.2): parametrize STALE_CARDS via CLI args, derive Erledigt
+ * column id dynamically per project (currently hardcoded to 599 for
+ * project 126).
  */
 
 import { bootstrap } from "../src/transports/bootstrap.js";
@@ -46,6 +54,9 @@ const STALE_CARDS: ReadonlyArray<{ id: number; reason: string }> = [
 ];
 
 const COMMENT_TEMPLATE = "Closed by v0.3.0 board hygiene — work completed.";
+const PROJECT_ID = 126; // hardcoded for now (TODO v0.3.2: parametrize via CLI args)
+const DONE_COLUMN_ID = 599; // "Erledigt" in project 126
+const DEFAULT_SWIMLANE_ID = 170; // default swimlane in project 126
 
 async function main(): Promise<number> {
   const { bundle, logger } = bootstrap(process.env);
@@ -55,6 +66,8 @@ async function main(): Promise<number> {
   let closed = 0;
   let alreadyClosed = 0;
   let failed = 0;
+  let moved = 0;
+  let moveSkipped = 0;
 
   for (const card of STALE_CARDS) {
     // Add comment first (audit trail), best-effort.
@@ -67,6 +80,26 @@ async function main(): Promise<number> {
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       logger.warn({ cardId: card.id, err: msg }, "[board-hygiene] comment failed (continuing)");
+    }
+
+    // Move card to Erledigt BEFORE closing so visual state matches logical state.
+    // closeTask alone leaves the card in its original column and only "show closed"
+    // filter reveals it — that's the bug this fix addresses.
+    try {
+      await handler.moveTaskPosition({
+        project_id: PROJECT_ID,
+        task_id: card.id,
+        column_id: DONE_COLUMN_ID,
+        position: 1,
+        swimlane_id: DEFAULT_SWIMLANE_ID,
+      });
+      moved += 1;
+      logger.info({ cardId: card.id, columnId: DONE_COLUMN_ID }, "[board-hygiene] moved to Erledigt");
+    } catch (err) {
+      // Already in Erledigt or other transient — log warn, continue to close anyway.
+      moveSkipped += 1;
+      const msg = err instanceof Error ? err.message : String(err);
+      logger.warn({ cardId: card.id, err: msg }, "[board-hygiene] move skipped (continuing to close)");
     }
 
     // Probe closeTask once on the first card.
@@ -132,7 +165,7 @@ async function main(): Promise<number> {
   }
 
   logger.info(
-    { totalCards: STALE_CARDS.length, closed, alreadyClosed, failed, closeTaskAvailable },
+    { totalCards: STALE_CARDS.length, closed, alreadyClosed, failed, moved, moveSkipped, closeTaskAvailable },
     "[board-hygiene] summary",
   );
 
