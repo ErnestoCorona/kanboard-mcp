@@ -1,2 +1,11 @@
 *.map
 dist/*.map
+
+# Dev-time helpers — never ship to npm.
+# Note: package.json `files` whitelist already restricts the published bundle,
+# but these defensive entries protect against accidental inclusion changes.
+scripts/
+tests/
+.kanboard.yaml
+.env
+

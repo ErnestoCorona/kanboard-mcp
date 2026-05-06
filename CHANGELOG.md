@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-05-06
+
+### Breaking changes — input renames (no aliases)
+
+- `update_task` — input field `id` removed; replaced by `task_id`. Strict-mode Zod rejects the legacy `id` as an unknown property. The Kanboard wire param remains `id`; the handler remaps `task_id → id` at the transport boundary.
+- `update_subtask` — input field `id` removed; replaced by `subtask_id`. Same wire remap pattern as `update_task`.
+- `add_comment` → `create_comment`. The tool registry now exposes only `create_comment`. Internal exports renamed `addCommentTool → createCommentTool`, `AddCommentInput → CreateCommentInput`. `add_project_user` is retained intentionally (relationship-creation semantics, not entity-creation).
+
+Pre-publish window with zero external users — no deprecation period, no alias layer.
+
+### Added — 11 new tools (25 → 36)
+
+- **Destructive (6, all confirm-gated via `confirm: z.literal(true)`):** `delete_task`, `delete_project`, `delete_subtask`, `delete_comment`, `delete_task_file`, `remove_project_user`. Each refuses to act without explicit `confirm: true`. `delete_project` and `remove_project_user` invalidate the project resolver cache on success.
+- **Swimlane CRUD (4):** `create_swimlane`, `update_swimlane`, `move_swimlane`, `delete_swimlane`. Mirrors the column tool pattern: project resolution via `.kanboard.yaml`, at-least-one-field refine on update, project-scoped resolver invalidation on success. `delete_swimlane` is confirm-gated.
+- **Comment symmetry (1):** `update_comment` — input `{comment_id, content}`. Handler remaps `comment_id → id` for the Kanboard wire.
+
+### Changed
+
+- `create_tasks_batch` — each item now accepts the full `create_task` field set. Added optional `creator_id`, `score`, `date_started`, `tags`, `reference` (mirrors `create_task` types and nullability). `date_started` flows through `isoToEpoch` exactly like `date_due`. Forwarded as-is to the handler — no coercion.
+- `list_overdue_tasks` — vestigial `.refine(() => true)` no-op removed. Behavior identical for all valid inputs (`scope: mine | all | project`).
+
+### Internal
+
+- `assertConfirmed(toolName, confirm)` helper centralizes confirm gating for all 7 destructive tools (`src/shared/confirm.ts`). Throws `ValidationError` when `confirm !== true`. Belt-and-suspenders defence against direct handler calls bypassing Zod.
+- `KanboardHandler` gains 13 typed methods: `removeTask`, `removeProject`, `removeSubtask`, `removeComment`, `removeTaskFile`, `removeProjectUser`, `getSwimlane`, `addSwimlane`, `updateSwimlane`, `changeSwimlanePosition`, `removeSwimlane`, `updateComment`, `closeTask` (Phase 9 board-hygiene helper).
+- `tests/integration/_helpers/cleanup.ts` — per-suite tracker (`CreatedResources` Sets for tasks/subtasks/comments/files/columns/swimlanes/projects) + `drainTier(label, ids, deleteFn)` helper. File-level `afterAll(60_000)` in `kanboard.int.test.ts` drains each FK tier concurrently via `Promise.allSettled` (subtasks → tasks → comments → files → swimlanes → columns → projects). Failures are logged warn-only and never re-throw.
+- `scripts/cleanup-sandbox.ts` — repo-resident sandbox drain script. Dual safety gate (project name matches `/sandbox|test/i` AND each entity name starts with `[TEST-`). Idempotent. Drains `[TEST-` tasks (active + closed). Columns require manual cleanup (no `removeColumn` handler in v0.3.0).
+- `scripts/preflight.sh` — pre-publish gate: `rm -rf node_modules package-lock.json && npm install && npm run selftest`.
+- `.npmignore` extended defensively (`scripts/`, `tests/`, `.kanboard.yaml`, `.env`). The `package.json` `files` whitelist already restricts the published bundle to `dist/`, `README.md`, `LICENSE`, `CHANGELOG.md`, and the two `.example` files.
+- Total registered MCP tools 25 → 36 (`allTools` array in `src/tools/index.ts`).
+- Unit test suite expanded by 100+ cases across the new tools, helper, schema edits, and tracker. Tool-count assertion bumped to 36 in `tests/unit/tools/index.test.ts` and `tests/unit/transports/bootstrap.test.ts`.
+
+### Reference
+
+SDD change: `mcp-kanboard-v0.3.0-public-ready` (engram topic family `sdd/mcp-kanboard-v0.3.0-public-ready/*`).
+
 ## [0.2.6] — 2026-05-05
 
 ### Added
@@ -100,6 +136,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Integration tests against a live Kanboard instance have not been executed; OQ-01 (JSON-RPC batch support) is verified by harness but pending real-instance confirmation.
 - 7 backlog items deferred to v0.2 — see `v0.2-backlog.md`.
 
+[0.3.0]: https://github.com/ErnestoCorona/kanboard-mcp/releases/tag/v0.3.0
 [0.2.6]: https://github.com/ErnestoCorona/kanboard-mcp/releases/tag/v0.2.6
 [0.2.5]: https://github.com/ErnestoCorona/kanboard-mcp/releases/tag/v0.2.5
 [0.1.0]: https://github.com/ErnestoCorona/kanboard-mcp/releases/tag/v0.1.0
