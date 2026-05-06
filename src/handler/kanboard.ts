@@ -80,7 +80,14 @@ export interface CreateTaskInput {
 }
 
 export interface UpdateTaskInput {
-  id: number;
+  /**
+   * Task id to update.
+   *
+   * Renamed from legacy `id` in v0.3.0 for naming uniformity. The handler
+   * remaps this to the wire-level `id` Kanboard's JSON-RPC `updateTask`
+   * method expects.
+   */
+  task_id: number;
   title?: string | undefined;
   description?: string | undefined;
   color_id?: string | undefined;
@@ -425,10 +432,16 @@ export class KanboardHandler {
 
   /**
    * Updates an existing task (partial update).
+   *
+   * The MCP-facing input field is `task_id` (v0.3.0+); Kanboard's JSON-RPC
+   * `updateTask` expects the wire param `id`, so we remap here at the
+   * transport boundary.
+   *
    * @throws {KanboardApiError} when Kanboard returns false.
    */
   public async updateTask(input: UpdateTaskInput): Promise<void> {
-    const raw = await this.#apiClient.call("updateTask", input);
+    const { task_id, ...rest } = input;
+    const raw = await this.#apiClient.call("updateTask", { id: task_id, ...rest });
     this.#logger.debug({ method: "updateTask" }, "updateTask OK");
     decodeMutation("updateTask", raw);
   }
@@ -707,10 +720,15 @@ export class KanboardHandler {
 
   /**
    * Updates an existing subtask (partial update).
+   *
+   * The MCP-facing input field is `subtask_id` (v0.3.0+); Kanboard's JSON-RPC
+   * `updateSubtask` expects the wire param `id`, so we remap here at the
+   * transport boundary.
+   *
    * @throws {KanboardApiError} when Kanboard returns false.
    */
   public async updateSubtask(input: {
-    id: number;
+    subtask_id: number;
     task_id: number;
     title?: string | undefined;
     status?: 0 | 1 | 2 | undefined;
@@ -718,7 +736,8 @@ export class KanboardHandler {
     time_estimated?: number | undefined;
     time_spent?: number | undefined;
   }): Promise<void> {
-    const raw = await this.#apiClient.call("updateSubtask", input);
+    const { subtask_id, ...rest } = input;
+    const raw = await this.#apiClient.call("updateSubtask", { id: subtask_id, ...rest });
     this.#logger.debug({ method: "updateSubtask" }, "updateSubtask OK");
     decodeMutation("updateSubtask", raw);
   }
@@ -900,5 +919,187 @@ export class KanboardHandler {
     const raw = await this.#apiClient.call("getAllSwimlanes", { project_id: projectId });
     this.#logger.debug({ method: "getAllSwimlanes" }, "getAllSwimlanes OK");
     return decodeGetList("getAllSwimlanes", raw, SwimlaneSchema, this.#logger);
+  }
+
+  /**
+   * Returns a single swimlane by id.
+   * @throws {NotFoundError} when the swimlane does not exist.
+   */
+  public async getSwimlane(swimlaneId: number): Promise<Swimlane> {
+    const raw = await this.#apiClient.call("getSwimlane", { swimlane_id: swimlaneId });
+    this.#logger.debug({ method: "getSwimlane" }, "getSwimlane OK");
+    return decodeGetSingle("getSwimlane", raw, SwimlaneSchema, this.#logger);
+  }
+
+  /**
+   * Adds a new swimlane to a project.
+   * @returns The numeric `swimlane_id` of the new swimlane.
+   * @throws {KanboardApiError} when Kanboard returns false.
+   */
+  public async addSwimlane(input: {
+    project_id: number;
+    name: string;
+    description?: string | undefined;
+  }): Promise<number> {
+    const raw = await this.#apiClient.call("addSwimlane", input);
+    this.#logger.debug({ method: "addSwimlane" }, "addSwimlane OK");
+    const id = decodeMutation("addSwimlane", raw);
+    if (id === undefined) {
+      throw new KanboardApiError("addSwimlane", "addSwimlane returned true but expected a swimlane_id");
+    }
+    return id;
+  }
+
+  /**
+   * Updates an existing swimlane (partial — name and/or description).
+   * @throws {KanboardApiError} when Kanboard returns false.
+   */
+  public async updateSwimlane(input: {
+    swimlane_id: number;
+    name?: string | undefined;
+    description?: string | undefined;
+  }): Promise<void> {
+    const raw = await this.#apiClient.call("updateSwimlane", input);
+    this.#logger.debug({ method: "updateSwimlane" }, "updateSwimlane OK");
+    decodeMutation("updateSwimlane", raw);
+  }
+
+  /**
+   * Moves a swimlane to a new position within its project.
+   * @throws {KanboardApiError} when Kanboard returns false.
+   */
+  public async changeSwimlanePosition(input: {
+    project_id: number;
+    swimlane_id: number;
+    position: number;
+  }): Promise<void> {
+    const raw = await this.#apiClient.call("changeSwimlanePosition", input);
+    this.#logger.debug({ method: "changeSwimlanePosition" }, "changeSwimlanePosition OK");
+    decodeMutation("changeSwimlanePosition", raw);
+  }
+
+  /**
+   * Removes a swimlane from a project.
+   * @throws {KanboardApiError} when Kanboard returns false.
+   */
+  public async removeSwimlane(input: {
+    project_id: number;
+    swimlane_id: number;
+  }): Promise<void> {
+    const raw = await this.#apiClient.call("removeSwimlane", input);
+    this.#logger.debug({ method: "removeSwimlane" }, "removeSwimlane OK");
+    decodeMutation("removeSwimlane", raw);
+  }
+
+  // ─── Destructive operations ───────────────────────────────────────────────
+
+  /**
+   * Permanently removes a task.
+   * The wire param Kanboard expects is `task_id`.
+   * @throws {KanboardApiError} when Kanboard returns false.
+   */
+  public async removeTask(taskId: number): Promise<void> {
+    const raw = await this.#apiClient.call("removeTask", { task_id: taskId });
+    this.#logger.debug({ method: "removeTask" }, "removeTask OK");
+    decodeMutation("removeTask", raw);
+  }
+
+  /**
+   * Permanently removes a project (and every entity inside it).
+   * The wire param Kanboard expects is `project_id`.
+   * @throws {KanboardApiError} when Kanboard returns false.
+   */
+  public async removeProject(projectId: number): Promise<void> {
+    const raw = await this.#apiClient.call("removeProject", { project_id: projectId });
+    this.#logger.debug({ method: "removeProject" }, "removeProject OK");
+    decodeMutation("removeProject", raw);
+  }
+
+  /**
+   * Permanently removes a subtask.
+   * Kanboard's wire param for this method is `subtask_id`.
+   * @throws {KanboardApiError} when Kanboard returns false.
+   */
+  public async removeSubtask(subtaskId: number): Promise<void> {
+    const raw = await this.#apiClient.call("removeSubtask", { subtask_id: subtaskId });
+    this.#logger.debug({ method: "removeSubtask" }, "removeSubtask OK");
+    decodeMutation("removeSubtask", raw);
+  }
+
+  /**
+   * Permanently removes a comment.
+   * Kanboard's wire param for this method is `comment_id`.
+   * @throws {KanboardApiError} when Kanboard returns false.
+   */
+  public async removeComment(commentId: number): Promise<void> {
+    const raw = await this.#apiClient.call("removeComment", { comment_id: commentId });
+    this.#logger.debug({ method: "removeComment" }, "removeComment OK");
+    decodeMutation("removeComment", raw);
+  }
+
+  /**
+   * Permanently removes a task attachment (file).
+   * Kanboard's wire param for this method is `file_id`.
+   * @throws {KanboardApiError} when Kanboard returns false.
+   */
+  public async removeTaskFile(fileId: number): Promise<void> {
+    const raw = await this.#apiClient.call("removeTaskFile", { file_id: fileId });
+    this.#logger.debug({ method: "removeTaskFile" }, "removeTaskFile OK");
+    decodeMutation("removeTaskFile", raw);
+  }
+
+  /**
+   * Removes the link between a user and a project.
+   * Kanboard's wire params are `project_id` and `user_id`.
+   * @throws {KanboardApiError} when Kanboard returns false.
+   */
+  public async removeProjectUser(input: {
+    project_id: number;
+    user_id: number;
+  }): Promise<void> {
+    const raw = await this.#apiClient.call("removeProjectUser", input);
+    this.#logger.debug({ method: "removeProjectUser" }, "removeProjectUser OK");
+    decodeMutation("removeProjectUser", raw);
+  }
+
+  // ─── Comment update ───────────────────────────────────────────────────────
+
+  /**
+   * Updates the body of an existing comment.
+   * Kanboard's wire params are `id` (the comment id) and `content`.
+   * The MCP tool layer accepts `comment_id` and remaps to wire `id` here.
+   * @throws {KanboardApiError} when Kanboard returns false.
+   */
+  public async updateComment(input: {
+    comment_id: number;
+    content: string;
+  }): Promise<void> {
+    const raw = await this.#apiClient.call("updateComment", {
+      id: input.comment_id,
+      content: input.content,
+    });
+    this.#logger.debug({ method: "updateComment" }, "updateComment OK");
+    decodeMutation("updateComment", raw);
+  }
+
+  // ─── Task close (Phase 9 board hygiene) ───────────────────────────────────
+
+  /**
+   * Closes a task (sets `is_active` to 0 in Kanboard).
+   *
+   * Phase 9 board-hygiene helper for v0.3.0: closes stale-but-done cards
+   * left in the Erledigt column with `status: 1`. Kanboard exposes a dedicated
+   * `closeTask` JSON-RPC method on standard installs — this handler attempts
+   * it directly. If the deployment lacks `closeTask`, callers may fall back to
+   * `updateTask({ task_id, status: false })` (a separate code path is provided
+   * at the tool/script layer when this method is unavailable).
+   *
+   * Wire param is `task_id`.
+   * @throws {KanboardApiError} when Kanboard returns false (e.g. method not exposed).
+   */
+  public async closeTask(taskId: number): Promise<void> {
+    const raw = await this.#apiClient.call("closeTask", { task_id: taskId });
+    this.#logger.debug({ method: "closeTask" }, "closeTask OK");
+    decodeMutation("closeTask", raw);
   }
 }

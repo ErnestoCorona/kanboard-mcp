@@ -167,7 +167,7 @@ describe("tasks CRUD", () => {
       expect(createdTaskId).toBeGreaterThan(0);
 
       const newDescription = `Updated by integration test at ${new Date().toISOString()}`;
-      await handler.updateTask({ id: createdTaskId, description: newDescription });
+      await handler.updateTask({ task_id: createdTaskId, description: newDescription });
 
       // Verify via re-fetch.
       const updated = await handler.getTask(createdTaskId);
@@ -331,7 +331,7 @@ describe("attachments", () => {
 
 describe("comments and subtasks", () => {
   it(
-    "add_comment to parent task returns a positive comment_id",
+    "create_comment on parent task returns a positive comment_id",
     async () => {
       expect(parentTaskId).toBeGreaterThan(0);
 

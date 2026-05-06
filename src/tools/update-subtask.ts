@@ -2,7 +2,7 @@
  * update_subtask — Update an existing Kanboard subtask (partial update).
  *
  * FR-18: Wraps handler.updateSubtask(input).
- * Requires id + task_id (identity fields) plus at least one updatable field.
+ * Requires subtask_id + task_id (identity fields) plus at least one updatable field.
  * Mutation returning false → API_ERROR (propagated from handler).
  */
 
@@ -16,7 +16,7 @@ import type { Resolvers } from "../handler/resolvers.js";
 
 export const UpdateSubtaskInput = z
   .object({
-    id: z.number().int().positive().describe("ID of the subtask to update (required)."),
+    subtask_id: z.number().int().positive().describe("ID of the subtask to update (required)."),
     task_id: z.number().int().positive().describe("ID of the parent task (required)."),
     title: z.string().min(1).max(255).optional().describe("New subtask title (optional)."),
     status: z
@@ -70,7 +70,7 @@ export const updateSubtaskTool = {
   name: "update_subtask",
   description:
     "Update an existing Kanboard subtask (partial update). " +
-    "Both 'id' and 'task_id' are required as identity fields. " +
+    "Both 'subtask_id' and 'task_id' are required as identity fields. " +
     "At least one of title, status, user_id, time_estimated, or time_spent must also be provided. " +
     "Status: 0 = todo, 1 = in progress, 2 = done.",
   inputSchema: UpdateSubtaskInput,
@@ -78,7 +78,7 @@ export const updateSubtaskTool = {
     const input = UpdateSubtaskInput.parse(raw);
 
     await deps.handler.updateSubtask({
-      id: input.id,
+      subtask_id: input.subtask_id,
       task_id: input.task_id,
       ...(input.title !== undefined ? { title: input.title } : {}),
       ...(input.status !== undefined ? { status: input.status } : {}),
@@ -91,10 +91,10 @@ export const updateSubtaskTool = {
       content: [
         {
           type: "text",
-          text: `Subtask ${String(input.id)} updated.`,
+          text: `Subtask ${String(input.subtask_id)} updated.`,
         },
       ],
-      structuredContent: { subtask_id: input.id, task_id: input.task_id },
+      structuredContent: { subtask_id: input.subtask_id, task_id: input.task_id },
     };
   },
 };

@@ -1,5 +1,5 @@
 /**
- * Unit tests for src/tools/add-comment.ts
+ * Unit tests for src/tools/create-comment.ts
  *
  * Strategy:
  * - KanboardHandler mocked with vi.fn() — no HTTP.
@@ -9,7 +9,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { addCommentTool } from "../../../src/tools/add-comment.js";
+import { createCommentTool } from "../../../src/tools/create-comment.js";
 import { AuthError, KanboardApiError } from "../../../src/shared/errors.js";
 import type { KanboardHandler } from "../../../src/handler/kanboard.js";
 import type { Resolvers } from "../../../src/handler/resolvers.js";
@@ -53,7 +53,7 @@ function buildMockDeps(overrides?: { createCommentResult?: number | "auth-error"
 // Tests
 // ---------------------------------------------------------------------------
 
-describe("add_comment tool", () => {
+describe("create_comment tool", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -63,7 +63,7 @@ describe("add_comment tool", () => {
   it("returns comment_id on success", async () => {
     const { handler, resolvers, createCommentMock } = buildMockDeps({ createCommentResult: 77 });
 
-    const result = await addCommentTool.handler(
+    const result = await createCommentTool.handler(
       { task_id: 42, content: "This is a comment." },
       { handler, resolvers },
     );
@@ -79,7 +79,7 @@ describe("add_comment tool", () => {
   it("passes task_id, content, reference, and visibility to handler — but NOT user_id", async () => {
     const { handler, resolvers, createCommentMock } = buildMockDeps({ createCommentResult: 10 });
 
-    await addCommentTool.handler(
+    await createCommentTool.handler(
       {
         task_id: 5,
         content: "Comment with extras.",
@@ -107,7 +107,7 @@ describe("add_comment tool", () => {
   it("does NOT pass user_id when no reference/visibility provided", async () => {
     const { handler, resolvers, createCommentMock } = buildMockDeps({ createCommentResult: 20 });
 
-    await addCommentTool.handler({ task_id: 1, content: "Simple comment" }, { handler, resolvers });
+    await createCommentTool.handler({ task_id: 1, content: "Simple comment" }, { handler, resolvers });
 
     expect(createCommentMock).not.toHaveBeenCalledWith(
       expect.objectContaining({ user_id: expect.anything() as unknown }),
@@ -117,7 +117,7 @@ describe("add_comment tool", () => {
   it("defaults visibility to 'app-user' when not provided", async () => {
     const { handler, resolvers, createCommentMock } = buildMockDeps({ createCommentResult: 30 });
 
-    await addCommentTool.handler({ task_id: 1, content: "Hello" }, { handler, resolvers });
+    await createCommentTool.handler({ task_id: 1, content: "Hello" }, { handler, resolvers });
 
     expect(createCommentMock).toHaveBeenCalledWith(
       expect.objectContaining({ visibility: "app-user" }),
@@ -130,7 +130,7 @@ describe("add_comment tool", () => {
     const { handler, resolvers } = buildMockDeps({ createCommentResult: "auth-error" });
 
     await expect(
-      addCommentTool.handler({ task_id: 1, content: "Should fail" }, { handler, resolvers }),
+      createCommentTool.handler({ task_id: 1, content: "Should fail" }, { handler, resolvers }),
     ).rejects.toBeInstanceOf(AuthError);
   });
 
@@ -140,7 +140,7 @@ describe("add_comment tool", () => {
     const { handler, resolvers } = buildMockDeps({ createCommentResult: "api-error" });
 
     await expect(
-      addCommentTool.handler({ task_id: 1, content: "Should also fail" }, { handler, resolvers }),
+      createCommentTool.handler({ task_id: 1, content: "Should also fail" }, { handler, resolvers }),
     ).rejects.toBeInstanceOf(KanboardApiError);
   });
 
@@ -150,7 +150,7 @@ describe("add_comment tool", () => {
     const { handler, resolvers } = buildMockDeps();
 
     await expect(
-      addCommentTool.handler({ content: "No task_id" }, { handler, resolvers }),
+      createCommentTool.handler({ content: "No task_id" }, { handler, resolvers }),
     ).rejects.toThrow();
   });
 
@@ -158,7 +158,7 @@ describe("add_comment tool", () => {
     const { handler, resolvers } = buildMockDeps();
 
     await expect(
-      addCommentTool.handler({ task_id: 1, content: "" }, { handler, resolvers }),
+      createCommentTool.handler({ task_id: 1, content: "" }, { handler, resolvers }),
     ).rejects.toThrow();
   });
 
@@ -166,7 +166,7 @@ describe("add_comment tool", () => {
     const { handler, resolvers } = buildMockDeps();
 
     await expect(
-      addCommentTool.handler(
+      createCommentTool.handler(
         { task_id: 1, content: "Hi", visibility: "invalid-value" },
         { handler, resolvers },
       ),

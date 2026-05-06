@@ -10,7 +10,7 @@
  * ### getMe() eager-but-non-fatal contract
  * `KanboardHandler`'s ctor fires getMe() in the background — the factory does
  * NOT await it. Failure surfaces only when a tool awaits `handler.getMe()`
- * (e.g. `add_comment`). This avoids startup brittleness in app mode while
+ * (e.g. `create_comment`). This avoids startup brittleness in app mode while
  * keeping the typical case latency-free.
  *
  * ### Barrel re-exports

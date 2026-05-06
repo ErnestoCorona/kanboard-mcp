@@ -1,10 +1,10 @@
 /**
  * MCP tool registration barrel — `src/tools/index.ts`
  *
- * Imports all 25 Kanboard tool objects, re-exports them individually,
+ * Imports all Kanboard tool objects, re-exports them individually,
  * and exposes:
  *   - `allTools`       — ordered, read-only array of every tool definition
- *   - `registerTools`  — mounts all 25 tools on an `McpServer` instance
+ *   - `registerTools`  — mounts all tools on an `McpServer` instance
  *
  * Call `registerTools` once during server bootstrap after constructing the
  * handler bundle via `createHandler(config)`.
@@ -34,14 +34,19 @@ import type { Resolvers } from "../handler/resolvers.js";
 // Tool imports (alphabetical by tool name for stability)
 // ---------------------------------------------------------------------------
 
-import { addCommentTool } from "./add-comment.js";
 import { addProjectUserTool } from "./add-project-user.js";
 import { attachFileToTaskTool } from "./attach-file-to-task.js";
 import { createColumnTool } from "./create-column.js";
+import { createCommentTool } from "./create-comment.js";
 import { createProjectTool } from "./create-project.js";
 import { createSubtaskTool } from "./create-subtask.js";
 import { createTaskTool } from "./create-task.js";
 import { createTasksBatchTool } from "./create-tasks-batch.js";
+import { deleteCommentTool } from "./delete-comment.js";
+import { deleteProjectTool } from "./delete-project.js";
+import { deleteSubtaskTool } from "./delete-subtask.js";
+import { deleteTaskTool } from "./delete-task.js";
+import { deleteTaskFileTool } from "./delete-task-file.js";
 import { getProjectTool } from "./get-project.js";
 import { getTaskTool } from "./get-task.js";
 import { listCategoriesTool } from "./list-categories.js";
@@ -55,6 +60,7 @@ import { listTasksTool } from "./list-tasks.js";
 import { listProjectUsersTool } from "./list-project-users.js";
 import { moveColumnTool } from "./move-column.js";
 import { moveTaskPositionTool } from "./move-task-position.js";
+import { removeProjectUserTool } from "./remove-project-user.js";
 import { updateColumnTool } from "./update-column.js";
 import { updateProjectTool } from "./update-project.js";
 import { updateSubtaskTool } from "./update-subtask.js";
@@ -64,14 +70,19 @@ import { updateTaskTool } from "./update-task.js";
 // Re-exports — individual tools (transports may pick them selectively)
 // ---------------------------------------------------------------------------
 
-export { addCommentTool } from "./add-comment.js";
 export { addProjectUserTool } from "./add-project-user.js";
 export { attachFileToTaskTool } from "./attach-file-to-task.js";
 export { createColumnTool } from "./create-column.js";
+export { createCommentTool } from "./create-comment.js";
 export { createProjectTool } from "./create-project.js";
 export { createSubtaskTool } from "./create-subtask.js";
 export { createTaskTool } from "./create-task.js";
 export { createTasksBatchTool } from "./create-tasks-batch.js";
+export { deleteCommentTool } from "./delete-comment.js";
+export { deleteProjectTool } from "./delete-project.js";
+export { deleteSubtaskTool } from "./delete-subtask.js";
+export { deleteTaskTool } from "./delete-task.js";
+export { deleteTaskFileTool } from "./delete-task-file.js";
 export { getProjectTool } from "./get-project.js";
 export { getTaskTool } from "./get-task.js";
 export { listCategoriesTool } from "./list-categories.js";
@@ -85,6 +96,7 @@ export { listTasksTool } from "./list-tasks.js";
 export { listProjectUsersTool } from "./list-project-users.js";
 export { moveColumnTool } from "./move-column.js";
 export { moveTaskPositionTool } from "./move-task-position.js";
+export { removeProjectUserTool } from "./remove-project-user.js";
 export { updateColumnTool } from "./update-column.js";
 export { updateProjectTool } from "./update-project.js";
 export { updateSubtaskTool } from "./update-subtask.js";
@@ -127,20 +139,25 @@ export interface ToolDef {
 // ---------------------------------------------------------------------------
 
 /**
- * All 25 Kanboard MCP tools in alphabetical order.
+ * All 31 Kanboard MCP tools in alphabetical order.
  *
  * Order is fixed so that any slice/comparison in tests and transports is
  * deterministic across environments.
  */
 export const allTools: readonly ToolDef[] = [
-  addCommentTool,
   addProjectUserTool,
   attachFileToTaskTool,
   createColumnTool,
+  createCommentTool,
   createProjectTool,
   createSubtaskTool,
   createTaskTool,
   createTasksBatchTool,
+  deleteCommentTool,
+  deleteProjectTool,
+  deleteSubtaskTool,
+  deleteTaskTool,
+  deleteTaskFileTool,
   getProjectTool,
   getTaskTool,
   listCategoriesTool,
@@ -154,6 +171,7 @@ export const allTools: readonly ToolDef[] = [
   listProjectUsersTool,
   moveColumnTool,
   moveTaskPositionTool,
+  removeProjectUserTool,
   updateColumnTool,
   updateProjectTool,
   updateSubtaskTool,
@@ -165,7 +183,7 @@ export const allTools: readonly ToolDef[] = [
 // ---------------------------------------------------------------------------
 
 /**
- * Register all 25 Kanboard tools on a given `McpServer` instance.
+ * Register all Kanboard tools on a given `McpServer` instance.
  *
  * Each tool is attached via `server.registerTool(name, config, callback)`.
  * The SDK validates incoming input against the tool's Zod `inputSchema`

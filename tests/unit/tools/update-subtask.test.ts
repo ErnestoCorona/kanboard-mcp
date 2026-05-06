@@ -58,7 +58,7 @@ describe("update_subtask tool", () => {
     const { handler, resolvers, updateSubtaskMock } = buildMockDeps();
 
     const result = await updateSubtaskTool.handler(
-      { id: 10, task_id: 42, title: "New title" },
+      { subtask_id: 10, task_id: 42, title: "New title" },
       { handler, resolvers },
     );
 
@@ -68,7 +68,7 @@ describe("update_subtask tool", () => {
     expect(firstContent?.text).toContain("10");
     expect(updateSubtaskMock).toHaveBeenCalledOnce();
     expect(updateSubtaskMock).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 10, task_id: 42, title: "New title" }),
+      expect.objectContaining({ subtask_id: 10, task_id: 42, title: "New title" }),
     );
   });
 
@@ -78,12 +78,12 @@ describe("update_subtask tool", () => {
     const { handler, resolvers, updateSubtaskMock } = buildMockDeps();
 
     await updateSubtaskTool.handler(
-      { id: 1, task_id: 5, status: 2 },
+      { subtask_id: 1, task_id: 5, status: 2 },
       { handler, resolvers },
     );
 
     expect(updateSubtaskMock).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 1, task_id: 5, status: 2 }),
+      expect.objectContaining({ subtask_id: 1, task_id: 5, status: 2 }),
     );
   });
 
@@ -93,12 +93,12 @@ describe("update_subtask tool", () => {
     const { handler, resolvers, updateSubtaskMock } = buildMockDeps();
 
     await updateSubtaskTool.handler(
-      { id: 2, task_id: 10, user_id: 7 },
+      { subtask_id: 2, task_id: 10, user_id: 7 },
       { handler, resolvers },
     );
 
     expect(updateSubtaskMock).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 2, task_id: 10, user_id: 7 }),
+      expect.objectContaining({ subtask_id: 2, task_id: 10, user_id: 7 }),
     );
   });
 
@@ -108,7 +108,7 @@ describe("update_subtask tool", () => {
     const { handler, resolvers, updateSubtaskMock } = buildMockDeps();
 
     await updateSubtaskTool.handler(
-      { id: 3, task_id: 10, time_estimated: 8 },
+      { subtask_id: 3, task_id: 10, time_estimated: 8 },
       { handler, resolvers },
     );
 
@@ -121,7 +121,7 @@ describe("update_subtask tool", () => {
     const { handler, resolvers, updateSubtaskMock } = buildMockDeps();
 
     await updateSubtaskTool.handler(
-      { id: 4, task_id: 10, time_spent: 3 },
+      { subtask_id: 4, task_id: 10, time_spent: 3 },
       { handler, resolvers },
     );
 
@@ -132,11 +132,24 @@ describe("update_subtask tool", () => {
 
   // ── Refine: at least one updatable field required ────────────────────────
 
-  it("throws ZodError when no updatable field provided (only id + task_id)", async () => {
+  it("throws ZodError when no updatable field provided (only subtask_id + task_id)", async () => {
     const { handler, resolvers } = buildMockDeps();
 
     await expect(
-      updateSubtaskTool.handler({ id: 1, task_id: 5 }, { handler, resolvers }),
+      updateSubtaskTool.handler({ subtask_id: 1, task_id: 5 }, { handler, resolvers }),
+    ).rejects.toThrow();
+  });
+
+  // ── Legacy 'id' rejected (renamed to subtask_id in v0.3.0) ───────────────
+
+  it("rejects legacy 'id' field (renamed to 'subtask_id' in v0.3.0)", async () => {
+    const { handler, resolvers } = buildMockDeps();
+
+    await expect(
+      updateSubtaskTool.handler(
+        { id: 1, task_id: 5, title: "Legacy" },
+        { handler, resolvers },
+      ),
     ).rejects.toThrow();
   });
 
@@ -146,17 +159,20 @@ describe("update_subtask tool", () => {
     const { handler, resolvers } = buildMockDeps({ apiError: true });
 
     await expect(
-      updateSubtaskTool.handler({ id: 1, task_id: 5, title: "New" }, { handler, resolvers }),
+      updateSubtaskTool.handler(
+        { subtask_id: 1, task_id: 5, title: "New" },
+        { handler, resolvers },
+      ),
     ).rejects.toBeInstanceOf(KanboardApiError);
   });
 
   // ── Input validation ──────────────────────────────────────────────────────
 
-  it("throws ZodError when id is missing", async () => {
+  it("throws ZodError when subtask_id is missing", async () => {
     const { handler, resolvers } = buildMockDeps();
 
     await expect(
-      updateSubtaskTool.handler({ task_id: 5, title: "No id" }, { handler, resolvers }),
+      updateSubtaskTool.handler({ task_id: 5, title: "No subtask_id" }, { handler, resolvers }),
     ).rejects.toThrow();
   });
 
@@ -164,7 +180,10 @@ describe("update_subtask tool", () => {
     const { handler, resolvers } = buildMockDeps();
 
     await expect(
-      updateSubtaskTool.handler({ id: 1, title: "No task_id" }, { handler, resolvers }),
+      updateSubtaskTool.handler(
+        { subtask_id: 1, title: "No task_id" },
+        { handler, resolvers },
+      ),
     ).rejects.toThrow();
   });
 
@@ -172,7 +191,10 @@ describe("update_subtask tool", () => {
     const { handler, resolvers } = buildMockDeps();
 
     await expect(
-      updateSubtaskTool.handler({ id: 1, task_id: 5, status: 3 }, { handler, resolvers }),
+      updateSubtaskTool.handler(
+        { subtask_id: 1, task_id: 5, status: 3 },
+        { handler, resolvers },
+      ),
     ).rejects.toThrow();
   });
 
@@ -181,7 +203,7 @@ describe("update_subtask tool", () => {
 
     await expect(
       updateSubtaskTool.handler(
-        { id: 1, task_id: 5, title: "Valid", extra_field: "bad" },
+        { subtask_id: 1, task_id: 5, title: "Valid", extra_field: "bad" },
         { handler, resolvers },
       ),
     ).rejects.toThrow();

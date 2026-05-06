@@ -151,7 +151,7 @@ describe("bootstrap — registerTools is called", () => {
     expect(depsArg?.resolvers).toBeDefined();
   });
 
-  it("25 tools are registered on the server after bootstrap", () => {
+  it("31 tools are registered on the server after bootstrap", () => {
     // Verify indirectly: by spying on server.registerTool BEFORE it's called.
     // We spy on McpServer.prototype.registerTool so ANY instance will record calls.
     const registerToolSpy = vi.spyOn(McpServer.prototype, "registerTool");
@@ -159,7 +159,7 @@ describe("bootstrap — registerTools is called", () => {
     const result = bootstrap(PERSONAL_ENV);
     suppressGetMe(result);
 
-    expect(registerToolSpy).toHaveBeenCalledTimes(25);
+    expect(registerToolSpy).toHaveBeenCalledTimes(31);
     // The server returned IS the McpServer that received the calls.
     expect(result.server).toBeInstanceOf(McpServer);
   });

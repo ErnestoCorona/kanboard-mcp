@@ -1,7 +1,7 @@
 /**
  * update_task — Update an existing Kanboard task (partial update).
  *
- * At least one updatable field beyond `id` must be provided (Zod refine).
+ * At least one updatable field beyond `task_id` must be provided (Zod refine).
  * Column and swimlane changes must go through move_task_position.
  * Returns { ok: true } on success.
  */
@@ -37,7 +37,7 @@ const UPDATABLE_FIELDS = [
 
 export const UpdateTaskInput = z
   .object({
-    id: z.number().int().positive().describe("Task id to update (required)."),
+    task_id: z.number().int().positive().describe("Task id to update (required)."),
     title: z.string().min(1).max(255).optional().describe("New task title."),
     description: z.string().optional().describe("New task description."),
     color_id: z.string().optional().describe("New color identifier (e.g. 'blue', 'red')."),
@@ -87,7 +87,7 @@ export const updateTaskTool = {
   name: "update_task",
   description:
     "Update an existing Kanboard task (partial update). " +
-    "At least one field besides 'id' must be provided — otherwise VALIDATION_ERROR. " +
+    "At least one field besides 'task_id' must be provided — otherwise VALIDATION_ERROR. " +
     "Column and swimlane changes must use move_task_position instead. " +
     "Returns { ok: true } on success.",
   inputSchema: UpdateTaskInput,
@@ -104,7 +104,7 @@ export const updateTaskTool = {
     const input = parsed.data;
 
     await deps.handler.updateTask({
-      id: input.id,
+      task_id: input.task_id,
       title: input.title,
       description: input.description,
       color_id: input.color_id,
@@ -120,8 +120,8 @@ export const updateTaskTool = {
     });
 
     return {
-      content: [{ type: "text", text: `Task ${String(input.id)} updated successfully.` }],
-      structuredContent: { ok: true, task_id: input.id },
+      content: [{ type: "text", text: `Task ${String(input.task_id)} updated successfully.` }],
+      structuredContent: { ok: true, task_id: input.task_id },
     };
   },
 };

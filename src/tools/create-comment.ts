@@ -1,5 +1,9 @@
 /**
- * add_comment — Add a comment to a Kanboard task.
+ * create_comment — Add a comment to a Kanboard task.
+ *
+ * Renamed from `add_comment` in v0.3.0 for verb uniformity with the rest of
+ * the create_* family. The Kanboard JSON-RPC method underneath is still
+ * `createComment`.
  *
  * FR-16: user_id is injected automatically from the cached getMe() result.
  * The tool input MUST NOT accept user_id — the handler auto-injects it.
@@ -16,7 +20,7 @@ import type { Resolvers } from "../handler/resolvers.js";
 // Input schema
 // ---------------------------------------------------------------------------
 
-export const AddCommentInput = z
+export const CreateCommentInput = z
   .object({
     task_id: z.number().int().positive().describe("ID of the task to comment on."),
     content: z.string().min(1).describe("Comment body text (required, non-empty)."),
@@ -28,7 +32,7 @@ export const AddCommentInput = z
   })
   .strict();
 
-export type AddCommentInput = z.infer<typeof AddCommentInput>;
+export type CreateCommentInput = z.infer<typeof CreateCommentInput>;
 
 // ---------------------------------------------------------------------------
 // Deps
@@ -43,7 +47,7 @@ export interface ToolDeps {
 // Result type
 // ---------------------------------------------------------------------------
 
-interface AddCommentResult {
+interface CreateCommentResult {
   content: { type: "text"; text: string }[];
   structuredContent: { comment_id: number };
 }
@@ -52,16 +56,16 @@ interface AddCommentResult {
 // Tool
 // ---------------------------------------------------------------------------
 
-export const addCommentTool = {
-  name: "add_comment",
+export const createCommentTool = {
+  name: "create_comment",
   description:
-    "Add a comment to a Kanboard task. " +
+    "Create a comment on a Kanboard task. " +
     "The comment author is automatically set to the authenticated user (via getMe() cache). " +
     "Do NOT pass user_id — it is injected server-side. " +
     "Returns { comment_id } on success.",
-  inputSchema: AddCommentInput,
-  handler: async (raw: unknown, deps: ToolDeps): Promise<AddCommentResult> => {
-    const input = AddCommentInput.parse(raw);
+  inputSchema: CreateCommentInput,
+  handler: async (raw: unknown, deps: ToolDeps): Promise<CreateCommentResult> => {
+    const input = CreateCommentInput.parse(raw);
 
     // handler.createComment auto-injects user_id from getMe() cache.
     // If getMe failed (invalid token), AuthError propagates here.
@@ -76,7 +80,7 @@ export const addCommentTool = {
       content: [
         {
           type: "text",
-          text: `Comment ${String(comment_id)} added to task ${String(input.task_id)}.`,
+          text: `Comment ${String(comment_id)} created on task ${String(input.task_id)}.`,
         },
       ],
       structuredContent: { comment_id },

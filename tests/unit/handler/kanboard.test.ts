@@ -438,9 +438,10 @@ describe("createTask", () => {
 });
 
 describe("updateTask", () => {
-  it("calls updateTask with correct params and resolves void", async () => {
+  it("remaps input task_id to wire id and resolves void", async () => {
     const { handler, callMock } = buildHandler([RAW_USER, true]);
-    await handler.updateTask({ id: 42, title: "Updated Title" });
+    await handler.updateTask({ task_id: 42, title: "Updated Title" });
+    // Wire param remains `id` — Kanboard JSON-RPC contract.
     expect(callMock).toHaveBeenCalledWith("updateTask", { id: 42, title: "Updated Title" });
   });
 });
@@ -590,9 +591,10 @@ describe("createSubtask", () => {
 });
 
 describe("updateSubtask", () => {
-  it("calls updateSubtask and resolves void", async () => {
+  it("remaps input subtask_id to wire id and resolves void", async () => {
     const { handler, callMock } = buildHandler([RAW_USER, true]);
-    await handler.updateSubtask({ id: 5, task_id: 42, status: 1 });
+    await handler.updateSubtask({ subtask_id: 5, task_id: 42, status: 1 });
+    // Wire param remains `id` — Kanboard JSON-RPC contract.
     expect(callMock).toHaveBeenCalledWith("updateSubtask", { id: 5, task_id: 42, status: 1 });
   });
 });
