@@ -27,10 +27,10 @@ Only the latest minor release receives security updates:
 
 | Version  | Supported          |
 | -------- | ------------------ |
-| 0.2.x    | ✅                 |
-| < 0.2    | ❌                 |
+| 0.3.x    | ✅                 |
+| < 0.3    | ❌                 |
 
-Once 0.3.x ships, 0.2.x will continue to receive critical security patches for **3 months** to give users a migration window.
+Once 0.4.x ships, 0.3.x will continue to receive critical security patches for **3 months** to give users a migration window.
 
 ## Best Practices for Users
 

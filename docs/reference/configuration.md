@@ -8,7 +8,7 @@ Every knob the Kanboard MCP server exposes — environment variables, `.kanboard
 
 | Variable | Required | Default | Validation | Description |
 |----------|----------|---------|------------|-------------|
-| `KANBOARD_URL` | Yes | — | Must be a valid HTTPS URL (HTTP allowed only for `localhost`) | Base URL of your Kanboard instance |
+| `KANBOARD_URL` | Yes | — | Valid `http://` or `https://` URL (HTTPS strongly recommended for non-local deployments) | Base URL of your Kanboard instance |
 | `KANBOARD_API_TOKEN` | Yes | — | 40-character hex string, non-empty | API token (personal or application, per `KANBOARD_AUTH_MODE`) |
 | `KANBOARD_AUTH_MODE` | No | `personal` | `personal` or `app` | Authentication mode — see [Authentication modes](../explanation/authentication-modes.md) |
 | `KANBOARD_USERNAME` | Personal mode only | — | Non-empty string | Your Kanboard login username; ignored in app mode |
