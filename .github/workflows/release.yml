@@ -37,10 +37,11 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Publish to npm (with provenance)
+      - name: Update npm (OIDC trusted publisher requires npm 11+)
+        run: npm install -g npm@latest
+
+      - name: Publish to npm (provenance + OIDC trusted publisher)
         run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
