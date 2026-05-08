@@ -34,7 +34,7 @@
  * Per-entity delete failures are logged as warnings and counted, but DO NOT
  * abort the run — the goal is best-effort drain.
  *
- * Run: `npx tsx scripts/cleanup-sandbox.ts --project-id 125`
+ * Run: `npx tsx scripts/cleanup-sandbox.ts --project-id <id>`
  */
 
 import { bootstrap } from "../src/transports/bootstrap.js";
