@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.2] — 2026-05-08
+
+### Internal
+
+- Switch release pipeline from static `NPM_TOKEN` to npm OIDC trusted publisher (`release.yml`). The workflow now requests a short-lived OIDC token from GitHub Actions and authenticates via npm's trusted-publisher registry — no static auth secrets in CI. Future releases require only `git tag vX.Y.Z && git push --tags`.
+- Replace `gitleaks/gitleaks-action@v2` in `ci.yml` with a direct `gitleaks detect` install + run. The action's `<first-commit>^..HEAD` revision range fails on initial-push events ("unknown revision" since the first commit has no parent). Direct invocation scans full history regardless of push event shape.
+
+No functional changes to the runtime MCP server. Tool count remains 37, test count remains 982/982.
+
 ## [0.3.1] — 2026-05-06
 
 ### Added
