@@ -38,7 +38,7 @@ jobs:
         run: npm run build
 
       - name: Update npm (OIDC trusted publisher requires npm 11+)
-        run: npm install -g npm@latest
+        run: npm install -g npm@latest --force
 
       - name: Publish to npm (provenance + OIDC trusted publisher)
         run: npm publish --provenance --access public
