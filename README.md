@@ -52,6 +52,8 @@ The same flow works for every kind of board work — pulling overdue tasks, open
 - **Pino structured logging with automatic secret redaction** — token values never reach stdout, stderr, or any log line, at any log level.
 - **TypeScript strict mode** + **982 unit tests** across 63 test files. Integration suite gated against accidental writes to non-sandbox projects.
 - **Smart retries for reads only** — idempotent calls retry transparently on transient HTTP failures (429 / 502 / 503 / 504); mutations never retry.
+- **Hard per-request timeouts** — every JSON-RPC call runs under `AbortSignal.timeout()` (default 15 s, configurable via `KANBOARD_TIMEOUT_MS`). Requests cannot hang the agent indefinitely — slow or unresponsive backends surface as a clean `TimeoutError` your agent can recover from.
+- **Debuggable from day one** — speaks plain MCP over stdio, so the [official MCP Inspector](https://github.com/modelcontextprotocol/inspector) works out of the box. Inspect schemas, fire individual tool calls, watch JSON-RPC traffic in a browser UI. See [Debugging with MCP Inspector](./docs/how-to/debug-with-mcp-inspector.md).
 
 ## 60-second quick start
 
@@ -332,6 +334,7 @@ default_category_id: 3
 
 Defaults are designed to fail safe:
 
+- **Access control is Kanboard's job** — each user runs the server with their own personal token; every tool call is authorized against Kanboard's existing project ACL. There is no parallel permission system to maintain or drift out of sync — if a user cannot see a project in Kanboard's UI, the MCP cannot see it either. Application mode is reserved for service identities (CI pipelines, bots, shared agents). See [The access-control model](./docs/explanation/access-control.md).
 - **Token storage** — keep `KANBOARD_API_TOKEN` in `.env` (gitignored) or in your MCP client's `env` block. Never paste a token into chat or commit one to a repository.
 - **Automatic redaction** — the Pino logger redacts `apiToken`, `req.headers.authorization`, `*.token`, `*.secret`, and `credentials.apiToken` from every log line at every log level. Token values never appear verbatim in any output.
 - **Stdout reserved for MCP** — all logging goes to stderr exclusively. Stdout is the MCP protocol channel — no leaks possible there.
@@ -378,6 +381,21 @@ KANBOARD_TEST_PROJECT_ID=42
 ```
 
 All test entities are prefixed `[TEST-{ISO-timestamp}]` and cleaned up by the suite's `afterAll` hook using the v0.3 destructive tools.
+
+### Debugging with MCP Inspector
+
+The fastest way to poke at the server by hand — list tool schemas, fire individual calls, and watch the JSON-RPC envelopes — is the [official MCP Inspector](https://github.com/modelcontextprotocol/inspector):
+
+```bash
+KANBOARD_URL=https://your-kanboard.example.com \
+KANBOARD_USERNAME=your-login \
+KANBOARD_API_TOKEN=your-token \
+npx @modelcontextprotocol/inspector -- npx -y @ernestocorona/kanboard-mcp
+```
+
+The `--` is required — the Inspector CLI consumes flags like `-e` and `-y` for its own use, so we tell it explicitly that everything after `--` belongs to the spawned MCP server command.
+
+The Inspector opens a local UI (default `http://127.0.0.1:6274`) with all 37 tools under the **Tools** tab, each one carrying its full Zod-derived schema. See the [full how-to](./docs/how-to/debug-with-mcp-inspector.md) for environment passthrough, app-mode setup, and common gotchas.
 
 ### Pre-commit
 
