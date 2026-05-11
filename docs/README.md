@@ -48,6 +48,5 @@ Understanding-oriented. Read these when you want to know how the server thinks.
 
 - HTTP / SSE transport — coming in v0.4.
 - Webhooks and IMAP-to-task ingestion — coming in v0.5.
-- Self-hosted Docker images — coming with v0.4 (GHCR).
 
 If you'd like to contribute a tutorial or recipe, see [CONTRIBUTING.md](../CONTRIBUTING.md).

@@ -1,0 +1,58 @@
+# Build artifacts and local dev state
+node_modules
+dist
+coverage
+*.tsbuildinfo
+
+# VCS, CI metadata, hooks
+.git
+.github
+.gitignore
+.gitleaks.toml
+.husky
+
+# Tests and docs are not needed in the image
+tests
+docs
+CHANGELOG.md
+CONTRIBUTING.md
+CODE_OF_CONDUCT.md
+SECURITY.md
+
+# Editor / OS noise
+.vscode
+.idea
+.DS_Store
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Local secrets and per-user config — must never enter the image
+.env
+.env.*
+.kanboard.yaml
+
+# Dev-only tooling configs (image doesn't need lint/test/format runners)
+.commitlintrc.json
+.cspell.json
+.editorconfig
+.prettierrc
+.prettierignore
+.nvmrc
+vitest.config.ts
+eslint.config.js
+tsconfig.eslint.json
+
+# Local-only scripts
+scripts
+
+# Caches
+.cache
+.temp
+.tsup
+.atl
+
+# Claude Code personal overrides
+.claude

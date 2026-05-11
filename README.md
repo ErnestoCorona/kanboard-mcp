@@ -119,9 +119,38 @@ Pick the one that fits your workflow:
 | **`npx`** *(recommended)* | Most users. Zero install, always uses the latest published version. | `npx -y @ernestocorona/kanboard-mcp` |
 | **Global install** | You run the server frequently and want a stable binary on `$PATH`. | `npm i -g @ernestocorona/kanboard-mcp` then `kanboard-mcp` |
 | **`bunx` / `pnpm dlx`** | You use Bun or pnpm as your runner. Same package, same behavior. | `bunx @ernestocorona/kanboard-mcp` |
+| **Docker (GHCR)** | Production-style deployment, CI agents, isolated environments. Multi-arch image (`linux/amd64`, `linux/arm64`), runs as non-root. | `docker run -i --rm -e KANBOARD_URL -e KANBOARD_USERNAME -e KANBOARD_API_TOKEN ghcr.io/ernestocorona/kanboard-mcp:latest` |
 | **Clone + node** | You want to fork, hack, or run from source. | `git clone …` → `npm i` → `npm run build` → `node dist/index.js` |
 
 > **Heads up:** the package is ESM-only and requires **Node ≥ 22**. Older Node versions will fail at startup.
+
+### Run with Docker
+
+The published image (`ghcr.io/ernestocorona/kanboard-mcp`) is built for `linux/amd64` and `linux/arm64`, runs as the non-root `node` user, and speaks MCP over stdio — exactly like the npm version. Point your client at `docker` instead of `npx`:
+
+```json
+{
+  "mcpServers": {
+    "kanboard": {
+      "command": "docker",
+      "args": [
+        "run", "-i", "--rm",
+        "-e", "KANBOARD_URL",
+        "-e", "KANBOARD_USERNAME",
+        "-e", "KANBOARD_API_TOKEN",
+        "ghcr.io/ernestocorona/kanboard-mcp:latest"
+      ],
+      "env": {
+        "KANBOARD_URL": "https://your-kanboard.example.com",
+        "KANBOARD_USERNAME": "your-kanboard-login",
+        "KANBOARD_API_TOKEN": "your-personal-token"
+      }
+    }
+  }
+}
+```
+
+The `-i` flag is mandatory — MCP needs stdin attached to pipe JSON-RPC frames. `--rm` keeps the container ephemeral. Pin to a specific tag (`:0.3`, `:0.3.2`) in production instead of `:latest`.
 
 ## Compatible MCP clients
 
@@ -315,8 +344,8 @@ For vulnerability disclosure, see [SECURITY.md](./SECURITY.md).
 
 ## Roadmap
 
-- **v0.3.x** *(current)* — full CRUD across all entities; destructive tools behind `confirmation` flag; 982 tests; production-ready stdio transport.
-- **v0.4** — HTTP/SSE transport for team deployments; multi-tenant per-user authentication via headers; official Docker image on GHCR.
+- **v0.3.x** *(current)* — full CRUD across all entities; destructive tools behind `confirmation` flag; 982 tests; production-ready stdio transport; official multi-arch Docker image on GHCR.
+- **v0.4** — HTTP/SSE transport for team deployments; multi-tenant per-user authentication via headers.
 - **v0.5** — webhooks support; IMAP inbox watcher (email-to-task ingestion); webhook-driven notifications back to Kanboard.
 
 ## Development
