@@ -23,6 +23,8 @@ A [Model Context Protocol](https://modelcontextprotocol.io/) server that brings 
 
 ## What it looks like
 
+![Kanboard MCP in action — an agent turning a customer email into a Mobile sprint backlog via JSON-RPC batching](./assets/demo.gif)
+
 ```text
 You:    Take this customer email and turn it into a Mobile sprint backlog.
 
@@ -57,13 +59,15 @@ The same flow works for every kind of board work — pulling overdue tasks, open
 
 ## 60-second quick start
 
+![Kanboard MCP setup — drop a JSON config block, run the selftest, see four green checks, you're done](./assets/setup.gif)
+
 ### 1. Get a Kanboard API token
 
 In Kanboard: **Profile → API → Generate token** (personal mode), or **Settings → API → Application token** (app mode for service accounts).
 
 ### 2. Add Kanboard MCP to your client
 
-Pick the snippet for your editor below. The simplest path is `npx` — no install step, just point your client at the package:
+**Recommended path: `npx` — zero install, always latest.** Drop this block into your MCP client config:
 
 ```json
 {
@@ -82,6 +86,8 @@ Pick the snippet for your editor below. The simplest path is `npx` — no instal
 ```
 
 Restart your MCP client. Done — the 37 tools are now available to your agent.
+
+> **Why `npx`?** It fetches `@ernestocorona/kanboard-mcp` from npm on demand, caches it locally, and runs it as the MCP server. You never run a separate install command, and you always get the latest published version — no upgrade chore, no `$PATH` to manage. This is also why step 3's selftest works without any prior install: `npx` handles the fetch transparently.
 
 ### 3. Verify
 
@@ -114,7 +120,7 @@ Start at the [docs index](./docs/) to pick the right entry point.
 
 ## Installation methods
 
-Pick the one that fits your workflow:
+**Just want it working?** Use the `npx` row (first entry below) — it's the recommended path for the vast majority of users. The other methods exist for specific use cases (frequent local runs, Bun/pnpm runtimes, production deployments, or hacking on the source).
 
 | Method | When to use | Command |
 |--------|-------------|---------|
