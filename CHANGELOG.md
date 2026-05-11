@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.3] — 2026-05-11
+
+### Added
+
+- **Multi-arch Docker image** published to `ghcr.io/ernestocorona/kanboard-mcp`. Built for `linux/amd64` and `linux/arm64` via a dedicated `.github/workflows/docker.yml` (independent from the npm release pipeline — failures in one do not block the other). Runtime is `node:22-alpine` and runs as the non-root `node` user. Stdio transport remains the same — clients invoke `docker run -i --rm` with env vars passed through.
+
+### Docs
+
+- New how-to: [Debug with MCP Inspector](./docs/how-to/debug-with-mcp-inspector.md) — recipes for launching the [official MCP Inspector](https://github.com/modelcontextprotocol/inspector) against npm, Docker, and a local checkout. Covers the mandatory `--` flag-separator (the Inspector CLI consumes `-e` and `-y` for its own use and must be told where its args end), app-mode setup, and a Common-Issues table mapping symptoms to fixes.
+- New explanation: [The access-control model](./docs/explanation/access-control.md) — why authorization is delegated entirely to Kanboard's project ACL, what that means in practice for single-user setups vs the v0.4 multi-tenant story, and a Common-Confusions Q&A (no per-tool restrictions at the MCP layer, no in-protocol privilege escalation, token rotation = process restart).
+- README — new "Why Kanboard MCP" bullets for hard per-request timeouts (`AbortSignal.timeout()` configurable via `KANBOARD_TIMEOUT_MS`) and out-of-the-box MCP Inspector support. New Security bullet on Kanboard-ACL delegation linking to the explanation doc.
+- README — new "Debugging with MCP Inspector" subsection inside Development, with the ready-to-paste launch command (including the required `--`).
+- README — new Docker row in the Installation methods table and a "Run with Docker" subsection with the MCP-client JSON config snippet for the GHCR image.
+- README — two new reproducible GIFs (`assets/demo.gif`, `assets/setup.gif`), generated via VHS tape scripts committed alongside (`assets/*.tape` + `assets/*.sh`). Demo GIF anchors the "What it looks like" section; setup GIF anchors the "60-second quick start" section.
+- README — `npx` prominence: step 2 of the quick start now leads with "Recommended path: `npx`", a new "Why `npx`?" blockquote explains the fetch-cache-run model, and the Installation methods table is prefaced with a "Just want it working?" callout pointing at the `npx` row.
+- Roadmap — Docker image moved from v0.4 to v0.3.x (now shipped). v0.4 retains HTTP/SSE transport and multi-tenant per-user authentication via headers.
+
+No functional changes to the runtime MCP server. Tool count remains 37, test count remains 982/982.
+
 ## [0.3.2] — 2026-05-08
 
 ### Internal
