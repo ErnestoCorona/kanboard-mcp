@@ -2,7 +2,9 @@
  * update_column — Update an existing Kanboard column (partial update).
  *
  * FR-26: wraps handler.getColumn(column_id) + handler.updateColumn(input).
- * At least one updatable field besides column_id must be provided (Zod refine).
+ * At least one updatable field besides column_id must be provided.
+ * Cross-field validation runs in the handler (NOT in the schema) so that
+ * inputSchema remains a plain ZodObject — the MCP SDK only reads ZodObject.shape.
  * On success, resolver cache is invalidated (NFR-9) using project_id from getColumn.
  * Returns { ok: true, column_id } on success.
  */
@@ -22,6 +24,10 @@ const UPDATABLE_FIELDS = ["title", "task_limit", "description"] as const;
 // Input schema
 // ---------------------------------------------------------------------------
 
+// NOTE: Do NOT add top-level .refine() to this schema. The MCP SDK
+// normalizeObjectSchema() only reads ZodObject.shape; a top-level .refine()
+// produces ZodEffects which has no .shape and collapses tools/list to {}.
+// Cross-field validation belongs in the handler body instead.
 export const UpdateColumnInput = z
   .object({
     column_id: z.number().int().positive().describe("Column id to update (required)."),
@@ -34,14 +40,7 @@ export const UpdateColumnInput = z
       .describe("New WIP limit (0 = unlimited). Omit to leave unchanged."),
     description: z.string().optional().describe("New column description."),
   })
-  .strict()
-  .refine(
-    (data) => UPDATABLE_FIELDS.some((field) => data[field] !== undefined),
-    {
-      message:
-        "At least one updatable field is required (title, task_limit, or description).",
-    },
-  );
+  .strict();
 
 export type UpdateColumnInput = z.infer<typeof UpdateColumnInput>;
 
@@ -86,6 +85,14 @@ export const updateColumnTool = {
     }
 
     const input = parsed.data;
+
+    if (!UPDATABLE_FIELDS.some((field) => input[field] !== undefined)) {
+      throw new ValidationError(
+        "update_column",
+        "At least one updatable field is required (title, task_limit, or description).",
+        { provided_fields: Object.keys(input) },
+      );
+    }
 
     // Resolve project_id via getColumn — needed for resolver invalidation (NFR-9).
     // If column does not exist, NotFoundError propagates as-is.

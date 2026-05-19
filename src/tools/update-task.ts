@@ -1,7 +1,9 @@
 /**
  * update_task — Update an existing Kanboard task (partial update).
  *
- * At least one updatable field beyond `task_id` must be provided (Zod refine).
+ * At least one updatable field beyond `task_id` must be provided.
+ * Cross-field validation runs in the handler (NOT in the schema) so that
+ * inputSchema remains a plain ZodObject — the MCP SDK only reads ZodObject.shape.
  * Column and swimlane changes must go through move_task_position.
  * Returns { ok: true } on success.
  */
@@ -35,6 +37,10 @@ const UPDATABLE_FIELDS = [
 // Input schema
 // ---------------------------------------------------------------------------
 
+// NOTE: Do NOT add top-level .refine() to this schema. The MCP SDK
+// normalizeObjectSchema() only reads ZodObject.shape; a top-level .refine()
+// produces ZodEffects which has no .shape and collapses tools/list to {}.
+// Cross-field validation belongs in the handler body instead.
 export const UpdateTaskInput = z
   .object({
     task_id: z.number().int().positive().describe("Task id to update (required)."),
@@ -51,13 +57,7 @@ export const UpdateTaskInput = z
     tags: z.array(z.string()).optional().describe("New array of tag strings (replaces existing)."),
     date_started: z.union([z.string(), z.number().int(), z.null()]).optional().describe("New start date as ISO 8601 string, Unix epoch seconds (integer), or null to clear."),
   })
-  .strict()
-  .refine(
-    (data) => UPDATABLE_FIELDS.some((field) => data[field] !== undefined),
-    {
-      message: "At least one updatable field is required (title, description, color_id, owner_id, creator_id, date_due, category_id, score, priority, reference, tags, or date_started).",
-    },
-  );
+  .strict();
 
 export type UpdateTaskInput = z.infer<typeof UpdateTaskInput>;
 
@@ -102,6 +102,14 @@ export const updateTaskTool = {
     }
 
     const input = parsed.data;
+
+    if (!UPDATABLE_FIELDS.some((field) => input[field] !== undefined)) {
+      throw new ValidationError(
+        "update_task",
+        "At least one updatable field is required (title, description, color_id, owner_id, creator_id, date_due, category_id, score, priority, reference, tags, or date_started).",
+        { provided_fields: Object.keys(input) },
+      );
+    }
 
     await deps.handler.updateTask({
       task_id: input.task_id,

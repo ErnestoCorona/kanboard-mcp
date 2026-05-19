@@ -2,7 +2,9 @@
  * update_swimlane — Update an existing Kanboard swimlane (partial update).
  *
  * Wraps handler.getSwimlane(swimlane_id) + handler.updateSwimlane(input).
- * At least one updatable field besides swimlane_id must be provided (Zod refine).
+ * At least one updatable field besides swimlane_id must be provided.
+ * Cross-field validation runs in the handler (NOT in the schema) so that
+ * inputSchema remains a plain ZodObject — the MCP SDK only reads ZodObject.shape.
  * On success, resolver cache is invalidated (NFR-9) using project_id from getSwimlane.
  * Returns { ok: true, swimlane_id } on success.
  */
@@ -22,19 +24,17 @@ const UPDATABLE_FIELDS = ["name", "description"] as const;
 // Input schema
 // ---------------------------------------------------------------------------
 
+// NOTE: Do NOT add top-level .refine() to this schema. The MCP SDK
+// normalizeObjectSchema() only reads ZodObject.shape; a top-level .refine()
+// produces ZodEffects which has no .shape and collapses tools/list to {}.
+// Cross-field validation belongs in the handler body instead.
 export const UpdateSwimlaneInput = z
   .object({
     swimlane_id: z.number().int().positive().describe("Swimlane id to update (required)."),
     name: z.string().min(1).max(255).optional().describe("New swimlane name (1–255 chars)."),
     description: z.string().optional().describe("New swimlane description."),
   })
-  .strict()
-  .refine(
-    (data) => UPDATABLE_FIELDS.some((field) => data[field] !== undefined),
-    {
-      message: "At least one updatable field is required (name or description).",
-    },
-  );
+  .strict();
 
 export type UpdateSwimlaneInput = z.infer<typeof UpdateSwimlaneInput>;
 
@@ -79,6 +79,14 @@ export const updateSwimlaneTool = {
     }
 
     const input = parsed.data;
+
+    if (!UPDATABLE_FIELDS.some((field) => input[field] !== undefined)) {
+      throw new ValidationError(
+        "update_swimlane",
+        "At least one updatable field is required (name or description).",
+        { provided_fields: Object.keys(input) },
+      );
+    }
 
     // Resolve project_id via getSwimlane — needed for resolver invalidation (NFR-9).
     // If swimlane does not exist, NotFoundError propagates as-is.

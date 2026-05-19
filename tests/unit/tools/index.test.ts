@@ -111,6 +111,39 @@ describe("allTools — structure", () => {
 });
 
 // ---------------------------------------------------------------------------
+// inputSchema — ZodObject regression guard
+// ---------------------------------------------------------------------------
+
+const AFFECTED_TOOL_NAMES = [
+  "update_task",
+  "update_project",
+  "update_swimlane",
+  "update_column",
+  "update_subtask",
+  "attach_file_to_task",
+  "move_task_position",
+  "get_project",
+] as const;
+
+describe("inputSchema — ZodObject regression guard", () => {
+  it("every affected tool has inputSchema with _def.typeName === 'ZodObject'", () => {
+    for (const toolName of AFFECTED_TOOL_NAMES) {
+      const tool = allTools.find((t) => t.name === toolName);
+      expect(tool, `tool '${toolName}' not found in allTools`).toBeDefined();
+      if (!tool) continue;
+
+      const typeName = (tool.inputSchema as { _def?: { typeName?: string } })._def?.typeName;
+      expect(
+        typeName,
+        `tool '${toolName}': inputSchema._def.typeName is '${String(typeName)}' but expected 'ZodObject'. ` +
+          `A top-level .refine() or other ZodEffects wrapper was reintroduced — remove it and move ` +
+          `the predicate into the handler body instead.`,
+      ).toBe("ZodObject");
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
 // registerTools — mock server assertions
 // ---------------------------------------------------------------------------
 
