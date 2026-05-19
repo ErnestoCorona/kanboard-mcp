@@ -3,10 +3,13 @@
  *
  * FR-18: Wraps handler.updateSubtask(input).
  * Requires subtask_id + task_id (identity fields) plus at least one updatable field.
+ * Cross-field validation runs in the handler (NOT in the schema) so that
+ * inputSchema remains a plain ZodObject — the MCP SDK only reads ZodObject.shape.
  * Mutation returning false → API_ERROR (propagated from handler).
  */
 
 import { z } from "zod";
+import { ValidationError } from "../shared/errors.js";
 import type { KanboardHandler } from "../handler/kanboard.js";
 import type { Resolvers } from "../handler/resolvers.js";
 
@@ -14,6 +17,10 @@ import type { Resolvers } from "../handler/resolvers.js";
 // Input schema
 // ---------------------------------------------------------------------------
 
+// NOTE: Do NOT add top-level .refine() to this schema. The MCP SDK
+// normalizeObjectSchema() only reads ZodObject.shape; a top-level .refine()
+// produces ZodEffects which has no .shape and collapses tools/list to {}.
+// Cross-field validation belongs in the handler body instead.
 export const UpdateSubtaskInput = z
   .object({
     subtask_id: z.number().int().positive().describe("ID of the subtask to update (required)."),
@@ -27,20 +34,7 @@ export const UpdateSubtaskInput = z
     time_estimated: z.number().nonnegative().optional().describe("New estimated time in hours (optional)."),
     time_spent: z.number().nonnegative().optional().describe("New time spent in hours (optional)."),
   })
-  .strict()
-  .refine(
-    (d) =>
-      d.title !== undefined ||
-      d.status !== undefined ||
-      d.user_id !== undefined ||
-      d.time_estimated !== undefined ||
-      d.time_spent !== undefined,
-    {
-      message:
-        "At least one updatable field must be provided (title, status, user_id, time_estimated, or time_spent).",
-      path: ["title"],
-    },
-  );
+  .strict();
 
 export type UpdateSubtaskInput = z.infer<typeof UpdateSubtaskInput>;
 
@@ -75,7 +69,30 @@ export const updateSubtaskTool = {
     "Status: 0 = todo, 1 = in progress, 2 = done.",
   inputSchema: UpdateSubtaskInput,
   handler: async (raw: unknown, deps: ToolDeps): Promise<UpdateSubtaskResult> => {
-    const input = UpdateSubtaskInput.parse(raw);
+    const parsed = UpdateSubtaskInput.safeParse(raw);
+    if (!parsed.success) {
+      throw new ValidationError(
+        "update_subtask",
+        parsed.error.issues.map((i) => i.message).join("; "),
+        parsed.error.issues,
+      );
+    }
+
+    const input = parsed.data;
+
+    if (
+      input.title === undefined &&
+      input.status === undefined &&
+      input.user_id === undefined &&
+      input.time_estimated === undefined &&
+      input.time_spent === undefined
+    ) {
+      throw new ValidationError(
+        "update_subtask",
+        "At least one updatable field must be provided (title, status, user_id, time_estimated, or time_spent).",
+        { provided_fields: Object.keys(input) },
+      );
+    }
 
     await deps.handler.updateSubtask({
       subtask_id: input.subtask_id,

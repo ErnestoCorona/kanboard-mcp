@@ -1,7 +1,9 @@
 /**
  * move_task_position — Move a task to a different column/position/swimlane.
  *
- * Accepts column_id XOR column_name (Zod refine — exactly one required).
+ * Accepts column_id XOR column_name (exactly one required; checked in handler body).
+ * Cross-field XOR validation runs in the handler (NOT in the schema) so that
+ * inputSchema remains a plain ZodObject — the MCP SDK only reads ZodObject.shape.
  * If column_name is provided, it is resolved to column_id via Resolvers.resolveColumnIdByName().
  * If swimlane_id is absent, it is resolved via Resolvers.resolveDefaultSwimlaneId()
  * using ctx.defaults.swimlaneId (undefined when not in .kanboard.yaml — NOT 0).
@@ -19,6 +21,10 @@ import type { Resolvers } from "../handler/resolvers.js";
 // Input schema
 // ---------------------------------------------------------------------------
 
+// NOTE: Do NOT add top-level .refine() to this schema. The MCP SDK
+// normalizeObjectSchema() only reads ZodObject.shape; a top-level .refine()
+// produces ZodEffects which has no .shape and collapses tools/list to {}.
+// Cross-field XOR validation belongs in the handler body instead.
 export const MoveTaskPositionInput = z
   .object({
     project_id: z.number().int().positive().optional().describe("Kanboard project id (overrides .kanboard.yaml)."),
@@ -29,13 +35,7 @@ export const MoveTaskPositionInput = z
     swimlane_id: z.number().int().positive().optional().describe("Target swimlane id. Falls back to .kanboard.yaml default or first active swimlane."),
     position: z.number().int().min(1).optional().default(1).describe("Position within the column (1-based, defaults to 1 = top)."),
   })
-  .strict()
-  .refine(
-    (data) => (data.column_id !== undefined) !== (data.column_name !== undefined),
-    {
-      message: "Exactly one of column_id or column_name must be provided (not both, not neither).",
-    },
-  );
+  .strict();
 
 export type MoveTaskPositionInput = z.infer<typeof MoveTaskPositionInput>;
 
@@ -82,6 +82,14 @@ export const moveTaskPositionTool = {
 
     const input = parsed.data;
 
+    if ((input.column_id !== undefined) === (input.column_name !== undefined)) {
+      throw new ValidationError(
+        "move_task_position",
+        "Exactly one of column_id or column_name must be provided (not both, not neither).",
+        { column_id: input.column_id, column_name: input.column_name },
+      );
+    }
+
     const ctx = await resolveProjectContext(deps.handler, {
       ...(input.project_id !== undefined ? { explicitProjectId: input.project_id } : {}),
       ...(input.project_identifier !== undefined ? { explicitProjectIdentifier: input.project_identifier } : {}),
@@ -95,15 +103,9 @@ export const moveTaskPositionTool = {
 
     if (input.column_id !== undefined) {
       resolvedColumnId = input.column_id;
-    } else if (input.column_name !== undefined) {
-      // column_name is guaranteed defined by the Zod refine above (exactly one of column_id / column_name).
-      resolvedColumnId = await deps.resolvers.resolveColumnIdByName(projectId, input.column_name);
     } else {
-      // This branch is unreachable: the Zod refine guarantees exactly one is defined.
-      throw new ValidationError(
-        "move_task_position",
-        "Exactly one of column_id or column_name must be provided.",
-      );
+      // column_name is guaranteed defined by the handler-side XOR check above.
+      resolvedColumnId = await deps.resolvers.resolveColumnIdByName(projectId, input.column_name!);
     }
 
     // ── Resolve swimlane_id ──────────────────────────────────────────────────

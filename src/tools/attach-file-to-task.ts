@@ -7,6 +7,9 @@
  * - File size (decoded) MUST be ≤ 5,242,880 bytes (5 MB); enforced BEFORE any HTTP call.
  * - Returns { file_id } on success.
  *
+ * Cross-field XOR validation runs in the handler (NOT in the schema) so that
+ * inputSchema remains a plain ZodObject — the MCP SDK only reads ZodObject.shape.
+ *
  * S4: When file_path is given, size is checked via fs.stat() BEFORE base64-encoding.
  *     When content_base64 is given, Buffer.byteLength is checked BEFORE the HTTP call.
  */
@@ -22,6 +25,10 @@ import { FILE_SIZE_CAP_BYTES } from "../shared/constants.js";
 // Input schema
 // ---------------------------------------------------------------------------
 
+// NOTE: Do NOT add top-level .refine() to this schema. The MCP SDK
+// normalizeObjectSchema() only reads ZodObject.shape; a top-level .refine()
+// produces ZodEffects which has no .shape and collapses tools/list to {}.
+// Cross-field XOR validation belongs in the handler body instead.
 export const AttachFileToTaskInput = z
   .object({
     task_id: z.number().int().positive().describe("ID of the task to attach the file to (required)."),
@@ -38,7 +45,7 @@ export const AttachFileToTaskInput = z
         "Absolute or relative path to the file to upload. " +
           "Relative paths are resolved against process.cwd(). " +
           "Maximum decoded size: 5 MB (5,242,880 bytes). " +
-          "Exactly one of file_path or content_base64 must be provided.",
+          "Exactly one of file_path or content_base64 must be provided (not both, not neither).",
       ),
     content_base64: z
       .string()
@@ -47,23 +54,10 @@ export const AttachFileToTaskInput = z
       .describe(
         "Base64-encoded file content to upload directly (no local file needed). " +
           "Decoded size must be ≤ 5 MB (5,242,880 bytes). " +
-          "Exactly one of file_path or content_base64 must be provided.",
+          "Exactly one of file_path or content_base64 must be provided (not both, not neither).",
       ),
   })
-  .strict()
-  .refine(
-    (data) => {
-      const hasFilePath = data.file_path !== undefined;
-      const hasBase64 = data.content_base64 !== undefined;
-      // Exactly one must be present.
-      return hasFilePath !== hasBase64;
-    },
-    {
-      message:
-        "Exactly one of file_path or content_base64 must be provided (not both, not neither).",
-      path: ["file_path"],
-    },
-  );
+  .strict();
 
 export type AttachFileToTaskInput = z.infer<typeof AttachFileToTaskInput>;
 
@@ -100,7 +94,26 @@ export const attachFileToTaskTool = {
     "Returns { file_id } on success.",
   inputSchema: AttachFileToTaskInput,
   handler: async (raw: unknown, deps: ToolDeps): Promise<AttachFileResult> => {
-    const input = AttachFileToTaskInput.parse(raw);
+    const parsed = AttachFileToTaskInput.safeParse(raw);
+    if (!parsed.success) {
+      throw new ValidationError(
+        "attach_file_to_task",
+        parsed.error.issues.map((i) => i.message).join("; "),
+        parsed.error.issues,
+      );
+    }
+
+    const input = parsed.data;
+
+    const hasFilePath = input.file_path !== undefined;
+    const hasBase64 = input.content_base64 !== undefined;
+    if (hasFilePath === hasBase64) {
+      throw new ValidationError(
+        "attach_file_to_task",
+        "Exactly one of file_path or content_base64 must be provided (not both, not neither).",
+        { file_path: input.file_path, content_base64: input.content_base64 !== undefined },
+      );
+    }
 
     // ── 1. Resolve project_id from the task itself (FR-15) ────────────────────
     const task = await deps.handler.getTask(input.task_id);
@@ -173,7 +186,8 @@ export const attachFileToTaskTool = {
       // 2e. Base64 encode
       blob_base64 = buf.toString("base64");
     } else {
-      // Should never be reached — Zod refine guarantees exactly one of file_path/content_base64.
+      // This branch is unreachable — the handler-side XOR check above guarantees
+      // exactly one of file_path/content_base64 is defined.
       throw new ValidationError(
         "attach_file_to_task",
         "attach_file_to_task: exactly one of file_path or content_base64 must be provided",

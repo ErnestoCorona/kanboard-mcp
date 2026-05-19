@@ -2,7 +2,9 @@
  * update_project — Update an existing Kanboard project (partial update).
  *
  * FR-24: wraps handler.updateProject(input).
- * At least one updatable field besides `project_id` must be provided (Zod refine).
+ * At least one updatable field besides `project_id` must be provided.
+ * Cross-field validation runs in the handler (NOT in the schema) so that
+ * inputSchema remains a plain ZodObject — the MCP SDK only reads ZodObject.shape.
  * Returns { ok: true, project_id } on success.
  */
 
@@ -30,6 +32,10 @@ const UPDATABLE_FIELDS = [
 // Input schema
 // ---------------------------------------------------------------------------
 
+// NOTE: Do NOT add top-level .refine() to this schema. The MCP SDK
+// normalizeObjectSchema() only reads ZodObject.shape; a top-level .refine()
+// produces ZodEffects which has no .shape and collapses tools/list to {}.
+// Cross-field validation belongs in the handler body instead.
 export const UpdateProjectInput = z
   .object({
     project_id: z.number().int().positive().describe("Project id to update (required)."),
@@ -47,14 +53,7 @@ export const UpdateProjectInput = z
       .describe("New end date as ISO 8601 string, Unix epoch seconds (integer), or null to clear."),
     email: z.string().email().optional().describe("New project notification email address."),
   })
-  .strict()
-  .refine(
-    (data) => UPDATABLE_FIELDS.some((field) => data[field] !== undefined),
-    {
-      message:
-        "At least one updatable field is required (name, description, identifier, owner_id, start_date, end_date, or email).",
-    },
-  );
+  .strict();
 
 export type UpdateProjectInput = z.infer<typeof UpdateProjectInput>;
 
@@ -98,6 +97,14 @@ export const updateProjectTool = {
     }
 
     const input = parsed.data;
+
+    if (!UPDATABLE_FIELDS.some((field) => input[field] !== undefined)) {
+      throw new ValidationError(
+        "update_project",
+        "At least one updatable field is required (name, description, identifier, owner_id, start_date, end_date, or email).",
+        { provided_fields: Object.keys(input) },
+      );
+    }
 
     await deps.handler.updateProject({
       project_id: input.project_id,
