@@ -132,7 +132,7 @@ describe("inputSchema — ZodObject regression guard", () => {
       expect(tool, `tool '${toolName}' not found in allTools`).toBeDefined();
       if (!tool) continue;
 
-      const typeName = (tool.inputSchema as { _def?: { typeName?: string } })?._def?.typeName;
+      const typeName = (tool.inputSchema as { _def?: { typeName?: string } })._def?.typeName;
       expect(
         typeName,
         `tool '${toolName}': inputSchema._def.typeName is '${String(typeName)}' but expected 'ZodObject'. ` +

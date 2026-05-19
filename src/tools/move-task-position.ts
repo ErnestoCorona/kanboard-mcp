@@ -103,9 +103,14 @@ export const moveTaskPositionTool = {
 
     if (input.column_id !== undefined) {
       resolvedColumnId = input.column_id;
+    } else if (input.column_name !== undefined) {
+      resolvedColumnId = await deps.resolvers.resolveColumnIdByName(projectId, input.column_name);
     } else {
-      // column_name is guaranteed defined by the handler-side XOR check above.
-      resolvedColumnId = await deps.resolvers.resolveColumnIdByName(projectId, input.column_name!);
+      // Unreachable: handler-side XOR check above guarantees exactly one is defined.
+      throw new ValidationError(
+        "move_task_position",
+        "Exactly one of column_id or column_name must be provided (not both, not neither).",
+      );
     }
 
     // ── Resolve swimlane_id ──────────────────────────────────────────────────
