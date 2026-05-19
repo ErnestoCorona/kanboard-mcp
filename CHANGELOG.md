@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.4] — 2026-05-19
+
+### Fixed
+
+- **Eight MCP tools were exporting empty JSON Schemas to clients via `tools/list`** (`update_task`, `update_project`, `update_swimlane`, `update_column`, `update_subtask`, `attach_file_to_task`, `move_task_position`, `get_project`). Root cause: a top-level Zod `.refine()` on each `inputSchema` wraps the `ZodObject` in `ZodEffects`, and the MCP SDK's `normalizeObjectSchema()` only unwraps `ZodObject.shape`. Clients without schema info would serialize numeric arguments as strings, which then failed server-side Zod validation. Cross-field predicates moved to handler-side `ValidationError` throws with byte-identical message text. A regression guard in `tests/unit/tools/index.test.ts` asserts `inputSchema._def.typeName === "ZodObject"` for all eight tools so the anti-pattern cannot silently return.
+
 ## [0.3.3] — 2026-05-11
 
 ### Added
