@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`close_task` and `reopen_task` tools** — close (archive, is_active=0) an active task off the board without deleting it, and reopen (is_active=1) a closed task. Reversible, so neither requires `confirm: true`. Tool count is now 39.
+
 ## [0.3.5] — 2026-06-07
 
 ### Changed

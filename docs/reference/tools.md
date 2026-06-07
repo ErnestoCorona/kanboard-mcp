@@ -1,6 +1,6 @@
 # Tools reference
 
-Kanboard MCP exposes **37 tools across 9 groups**. Every tool input is validated by a strict Zod schema before any HTTP call. Every output is parsed and reshaped into a stable, type-safe contract — Kanboard's per-version response shape variations are absorbed at the boundary.
+Kanboard MCP exposes **39 tools across 9 groups**. Every tool input is validated by a strict Zod schema before any HTTP call. Every output is parsed and reshaped into a stable, type-safe contract — Kanboard's per-version response shape variations are absorbed at the boundary.
 
 This page lists every tool, its required inputs, the optional inputs you'll actually use, and any special semantics. For the canonical schema (every optional field, every refinement), see `src/tools/<tool-name>.ts` — those files are the source of truth.
 
@@ -46,7 +46,7 @@ This page lists every tool, its required inputs, the optional inputs you'll actu
 | `move_swimlane` | `project_id`, `swimlane_id`, `position` | — | `position` is 1-based |
 | `delete_swimlane` | `swimlane_id`, `confirmation: true` | — | **Destructive** |
 
-## Task Management (8 tools)
+## Task Management (10 tools)
 
 | Tool | Required | Common optional | Notes |
 |------|----------|-----------------|-------|
@@ -55,6 +55,8 @@ This page lists every tool, its required inputs, the optional inputs you'll actu
 | `create_task` | `project_id`, `title` | `column_id`, `swimlane_id`, `owner_id`, `category_id`, `color_id`, `priority` (0–3), `description`, `date_due`, `tags` (array of strings), `score`, `reference` | All defaults from `.kanboard.yaml` apply when fields are omitted |
 | `update_task` | `task_id` | Same fields as `create_task` plus `is_active` | Partial update — moves columns, reassigns owners, edits content |
 | `delete_task` | `task_id`, `confirmation: true` | — | **Destructive** |
+| `close_task` | `task_id` | — | Sets `is_active=0` — archives off the active board, preserved (not deleted). Reversible via `reopen_task` |
+| `reopen_task` | `task_id` | — | Sets `is_active=1` — restores a closed task to the active board. Inverse of `close_task` |
 | `move_task_position` | `project_id`, `task_id`, `column_id`, `position`, `swimlane_id` | — | `position` is 1-based within the destination column |
 | `list_my_tasks` | — | — | Tasks assigned to the authenticated user; empty in app mode |
 | `list_overdue_tasks` | — | `project_id` (to scope) | Tasks with `date_due` in the past and `is_active=true` |

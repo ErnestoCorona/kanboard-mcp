@@ -36,7 +36,7 @@ The Inspector starts a local web UI (default `http://127.0.0.1:6274`) and a prox
 
 ### 2. Connect, then explore the Tools tab
 
-The UI auto-connects on launch. Click **Tools** in the left nav: all 37 tools appear, grouped by domain. Click any one to see:
+The UI auto-connects on launch. Click **Tools** in the left nav: all 39 tools appear, grouped by domain. Click any one to see:
 
 - Its full input schema, derived from the Zod definition at startup.
 - Its output schema (same source of truth).

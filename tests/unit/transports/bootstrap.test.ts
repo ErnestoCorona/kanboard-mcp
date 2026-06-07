@@ -157,7 +157,7 @@ describe("bootstrap — registerTools is called", () => {
     expect(depsArg?.resolvers).toBeDefined();
   });
 
-  it("37 tools are registered on the server after bootstrap", () => {
+  it("39 tools are registered on the server after bootstrap", () => {
     // Verify indirectly: by spying on server.registerTool BEFORE it's called.
     // We spy on McpServer.prototype.registerTool so ANY instance will record calls.
     const registerToolSpy = vi.spyOn(McpServer.prototype, "registerTool");
@@ -165,7 +165,7 @@ describe("bootstrap — registerTools is called", () => {
     const result = bootstrap(PERSONAL_ENV);
     suppressGetMe(result);
 
-    expect(registerToolSpy).toHaveBeenCalledTimes(37);
+    expect(registerToolSpy).toHaveBeenCalledTimes(39);
     // The server returned IS the McpServer that received the calls.
     expect(result.server).toBeInstanceOf(McpServer);
   });
@@ -220,12 +220,12 @@ describe("bootstrap — degraded mode (missing / invalid credentials)", () => {
         expect(result.configError).toBeInstanceOf(ConfigError);
       });
 
-      it("registers all 37 tools (tools/list still works)", () => {
+      it("registers all 39 tools (tools/list still works)", () => {
         const registerToolSpy = vi.spyOn(McpServer.prototype, "registerTool");
 
         const result = bootstrap(env);
 
-        expect(registerToolSpy).toHaveBeenCalledTimes(37);
+        expect(registerToolSpy).toHaveBeenCalledTimes(39);
         expect(result.server).toBeInstanceOf(McpServer);
       });
 

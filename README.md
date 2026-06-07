@@ -6,12 +6,12 @@
 
 A [Model Context Protocol](https://modelcontextprotocol.io/) server that brings your [Kanboard](https://kanboard.org/) board into Claude Code, Claude Desktop, Cursor, Cline, Zed, and beyond — so your agent can read, plan, and update tasks the same way you would.
 
-**37 typed tools · JSON-RPC batching · Dual authentication · TypeScript strict · 982 tests**
+**39 typed tools · JSON-RPC batching · Dual authentication · TypeScript strict · 1016 tests**
 
 [![npm version](https://img.shields.io/npm/v/@ernestocorona/kanboard-mcp.svg?color=cb3837&logo=npm)](https://www.npmjs.com/package/@ernestocorona/kanboard-mcp)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![Node.js >=22](https://img.shields.io/badge/node-%3E%3D22-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
-[![Tests](https://img.shields.io/badge/tests-982%20passing-brightgreen.svg)](#development)
+[![Tests](https://img.shields.io/badge/tests-1016%20passing-brightgreen.svg)](#development)
 [![TypeScript Strict](https://img.shields.io/badge/typescript-strict-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![MCP Compatible](https://img.shields.io/badge/MCP-compatible-7c3aed)](https://modelcontextprotocol.io/)
 
@@ -46,13 +46,13 @@ The same flow works for every kind of board work — pulling overdue tasks, open
 
 ## Why Kanboard MCP
 
-- **37 typed tools** across 9 groups — full CRUD on projects, columns, swimlanes, tasks, subtasks, comments, attachments, and members. No half-supported entities, no read-only stubs.
+- **39 typed tools** across 9 groups — full CRUD on projects, columns, swimlanes, tasks, subtasks, comments, attachments, and members. No half-supported entities, no read-only stubs.
 - **JSON-RPC 2.0 batching** — create up to 100 tasks in one HTTP round-trip. Turn an email, a meeting transcript, or a doc into a sprint backlog in seconds.
 - **Dual authentication** — *personal token* (acts as you, with your Kanboard identity) or *application token* (service identity for CI, bots, and shared agents).
 - **Walk-up project resolver** — drop one `.kanboard.yaml` at your repo root, every tool auto-resolves the project context. Switch repos, your agent switches boards.
 - **Zero runtime HTTP dependencies** — native Node 22 `fetch`, 4 production deps total. Audit surface is intentionally tiny.
 - **Pino structured logging with automatic secret redaction** — token values never reach stdout, stderr, or any log line, at any log level.
-- **TypeScript strict mode** + **982 unit tests** across 63 test files. Integration suite gated against accidental writes to non-sandbox projects.
+- **TypeScript strict mode** + **1016 unit tests** across 65 test files. Integration suite gated against accidental writes to non-sandbox projects.
 - **Smart retries for reads only** — idempotent calls retry transparently on transient HTTP failures (429 / 502 / 503 / 504); mutations never retry.
 - **Hard per-request timeouts** — every JSON-RPC call runs under `AbortSignal.timeout()` (default 15 s, configurable via `KANBOARD_TIMEOUT_MS`). Requests cannot hang the agent indefinitely — slow or unresponsive backends surface as a clean `TimeoutError` your agent can recover from.
 - **Debuggable from day one** — speaks plain MCP over stdio, so the [official MCP Inspector](https://github.com/modelcontextprotocol/inspector) works out of the box. Inspect schemas, fire individual tool calls, watch JSON-RPC traffic in a browser UI. See [Debugging with MCP Inspector](./docs/how-to/debug-with-mcp-inspector.md).
@@ -85,7 +85,7 @@ In Kanboard: **Profile → API → Generate token** (personal mode), or **Settin
 }
 ```
 
-Restart your MCP client. Done — the 37 tools are now available to your agent.
+Restart your MCP client. Done — the 39 tools are now available to your agent.
 
 > **Why `npx`?** It fetches `@ernestocorona/kanboard-mcp` from npm on demand, caches it locally, and runs it as the MCP server. You never run a separate install command, and you always get the latest published version — no upgrade chore, no `$PATH` to manage. This is also why step 3's selftest works without any prior install: `npx` handles the fetch transparently.
 
@@ -219,7 +219,7 @@ You can still override per call by passing `project_id` explicitly. The file is 
 
 ## Tool catalog
 
-**37 tools across 9 groups.** Each one ships with a strict Zod schema for inputs and outputs — inputs are validated before any HTTP request; outputs are parsed into a stable, type-safe contract regardless of Kanboard's per-version response shape.
+**39 tools across 9 groups.** Each one ships with a strict Zod schema for inputs and outputs — inputs are validated before any HTTP request; outputs are parsed into a stable, type-safe contract regardless of Kanboard's per-version response shape.
 
 ### Project Management (8 tools)
 
@@ -254,7 +254,7 @@ You can still override per call by passing `project_id` explicitly. The file is 
 | `move_swimlane` | Reorder swimlanes | *"Move Backend Team above Frontend"* |
 | `delete_swimlane` | Remove a swimlane (requires confirmation) | *"Delete the inactive team swimlane"* |
 
-### Task Management (8 tools)
+### Task Management (10 tools)
 
 | Tool | Description | Example Usage |
 |------|-------------|---------------|
@@ -263,6 +263,8 @@ You can still override per call by passing `project_id` explicitly. The file is 
 | `create_task` | Create a single task | *"Create 'Fix login bug' in Backlog"* |
 | `update_task` | Edit any task field, move column, assign owner | *"Move task #1234 to In Progress and assign it to me"* |
 | `delete_task` | Permanently delete a task (requires confirmation) | *"Delete task #1234"* |
+| `close_task` | Archive a task off the active board — reversible, not a delete | *"Close task #1234"* |
+| `reopen_task` | Restore a closed task to the active board | *"Reopen task #1234"* |
 | `move_task_position` | Reposition a task within or across columns | *"Move task #1234 to the top of Done"* |
 | `list_my_tasks` | List tasks assigned to the authenticated user | *"What's on my plate?"* |
 | `list_overdue_tasks` | List all tasks past their due date | *"Show me what's overdue"* |
@@ -353,7 +355,7 @@ For vulnerability disclosure, see [SECURITY.md](./SECURITY.md).
 
 ## Roadmap
 
-- **v0.3.x** *(current)* — full CRUD across all entities; destructive tools behind `confirmation` flag; 982 tests; production-ready stdio transport; official multi-arch Docker image on GHCR.
+- **v0.3.x** *(current)* — full CRUD across all entities; destructive tools behind `confirmation` flag; 1016 tests; production-ready stdio transport; official multi-arch Docker image on GHCR.
 - **v0.4** — HTTP/SSE transport for team deployments; multi-tenant per-user authentication via headers.
 - **v0.5** — webhooks support; IMAP inbox watcher (email-to-task ingestion); webhook-driven notifications back to Kanboard.
 
@@ -367,7 +369,7 @@ npm install
 npm run typecheck       # tsc --noEmit (TypeScript strict mode)
 npm run lint            # ESLint flat config
 npm run lint:fix        # ESLint with auto-fix
-npm run test            # 982 unit tests, no network (default for `npm test`)
+npm run test            # 1016 unit tests, no network (default for `npm test`)
 npm run test:int        # integration tests (requires .env + RUN_INTEGRATION=1)
 npm run build           # tsup ESM bundle → dist/
 npm run dev             # tsup watch mode
@@ -401,7 +403,7 @@ npx @modelcontextprotocol/inspector -- npx -y @ernestocorona/kanboard-mcp
 
 The `--` is required — the Inspector CLI consumes flags like `-e` and `-y` for its own use, so we tell it explicitly that everything after `--` belongs to the spawned MCP server command.
 
-The Inspector opens a local UI (default `http://127.0.0.1:6274`) with all 37 tools under the **Tools** tab, each one carrying its full Zod-derived schema. See the [full how-to](./docs/how-to/debug-with-mcp-inspector.md) for environment passthrough, app-mode setup, and common gotchas.
+The Inspector opens a local UI (default `http://127.0.0.1:6274`) with all 39 tools under the **Tools** tab, each one carrying its full Zod-derived schema. See the [full how-to](./docs/how-to/debug-with-mcp-inspector.md) for environment passthrough, app-mode setup, and common gotchas.
 
 ### Pre-commit
 

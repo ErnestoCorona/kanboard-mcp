@@ -32,7 +32,7 @@ Goal-oriented. You know what you want; we tell you how to get there.
 Lookup-oriented. Read it when you need an exact answer.
 
 - [Configuration](./reference/configuration.md) — every environment variable and `.kanboard.yaml` field, with defaults and validation rules.
-- [Tools](./reference/tools.md) — all 37 tools, grouped by domain, with required and optional inputs.
+- [Tools](./reference/tools.md) — all 39 tools, grouped by domain, with required and optional inputs.
 - [Errors](./reference/errors.md) — the error envelope, error types, and what each one means.
 
 ## 💡 Explanation — the *why*
