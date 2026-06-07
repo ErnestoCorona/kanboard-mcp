@@ -6,7 +6,9 @@
  * - Assert the returned BootstrapResult shape.
  * - Assert registerTools is called (tools are mounted on the server) — verified
  *   by spying on the registerTools export from src/tools/index.ts.
- * - Assert ConfigError propagates from loadEnv() on missing env vars.
+ * - Assert DEGRADED mode on missing / invalid env vars: bootstrap() does NOT
+ *   throw ConfigError; it returns a listable server with `parsedEnv: null`,
+ *   `configError` set, all tools registered, and a bundle whose methods throw.
  * - Assert bootstrap() is synchronous (returns before getMe resolves).
  *
  * We do NOT make any real HTTP connections. getMe() fires in the background
@@ -70,6 +72,9 @@ describe("bootstrap — personal mode", () => {
     expect(result.bundle).toBeDefined();
     expect(result.logger).toBeDefined();
     expect(result.parsedEnv).toBeDefined();
+    expect(result.parsedEnv).not.toBeNull();
+    // Fully-credentialed path: no configError.
+    expect(result.configError).toBeNull();
   });
 
   it("server is an McpServer instance", () => {
@@ -92,9 +97,10 @@ describe("bootstrap — personal mode", () => {
     const result = bootstrap(PERSONAL_ENV);
     suppressGetMe(result);
 
-    expect(result.parsedEnv.mode).toBe("personal");
-    expect(result.parsedEnv.url).toBe("https://pm.test.example.com");
-    expect(result.parsedEnv.username).toBe("alice");
+    expect(result.parsedEnv).not.toBeNull();
+    expect(result.parsedEnv?.mode).toBe("personal");
+    expect(result.parsedEnv?.url).toBe("https://pm.test.example.com");
+    expect(result.parsedEnv?.username).toBe("alice");
   });
 
   it("logger is defined and has info/error/warn methods", () => {
@@ -118,14 +124,14 @@ describe("bootstrap — app mode", () => {
 
     expect(result.server).toBeInstanceOf(McpServer);
     expect(result.bundle.handler).toBeDefined();
-    expect(result.parsedEnv.mode).toBe("app");
+    expect(result.parsedEnv?.mode).toBe("app");
   });
 
   it("parsedEnv.username is 'jsonrpc' in app mode", () => {
     const result = bootstrap(APP_ENV);
     suppressGetMe(result);
 
-    expect(result.parsedEnv.username).toBe("jsonrpc");
+    expect(result.parsedEnv?.username).toBe("jsonrpc");
   });
 });
 
@@ -166,45 +172,84 @@ describe("bootstrap — registerTools is called", () => {
 });
 
 // ---------------------------------------------------------------------------
-// ConfigError propagation
+// Degraded mode — lazy credential validation
+//
+// bootstrap() MUST NOT throw ConfigError for missing / invalid credentials.
+// Instead it returns a listable server (all tools registered so tools/list
+// works) with parsedEnv: null and configError set. Tool CALLS fail with the
+// ConfigError. This keeps the server enumerable by registries / inspectors
+// (e.g. Glama) that run it WITHOUT the operator's secret credentials.
 // ---------------------------------------------------------------------------
 
-describe("bootstrap — ConfigError propagation", () => {
-  it("missing KANBOARD_URL → throws ConfigError", () => {
-    const env: NodeJS.ProcessEnv = {
-      ...PERSONAL_ENV,
-      KANBOARD_URL: undefined,
-    };
+describe("bootstrap — degraded mode (missing / invalid credentials)", () => {
+  // Each degraded env that loadEnv() would reject with a ConfigError.
+  const cases: readonly { name: string; env: NodeJS.ProcessEnv }[] = [
+    {
+      name: "missing KANBOARD_URL",
+      env: { ...PERSONAL_ENV, KANBOARD_URL: undefined },
+    },
+    {
+      name: "missing KANBOARD_API_TOKEN",
+      env: { ...PERSONAL_ENV, KANBOARD_API_TOKEN: undefined },
+    },
+    {
+      name: "personal mode + missing KANBOARD_USERNAME",
+      env: { ...PERSONAL_ENV, KANBOARD_USERNAME: undefined },
+    },
+    {
+      name: "invalid KANBOARD_AUTH_MODE",
+      env: { ...PERSONAL_ENV, KANBOARD_AUTH_MODE: "invalid-mode" },
+    },
+  ];
 
-    expect(() => bootstrap(env)).toThrow(ConfigError);
-  });
+  for (const { name, env } of cases) {
+    describe(name, () => {
+      it("does NOT throw — returns a valid BootstrapResult", () => {
+        const result = bootstrap(env);
 
-  it("missing KANBOARD_API_TOKEN → throws ConfigError", () => {
-    const env: NodeJS.ProcessEnv = {
-      ...PERSONAL_ENV,
-      KANBOARD_API_TOKEN: undefined,
-    };
+        expect(result).toBeDefined();
+        expect(result.server).toBeInstanceOf(McpServer);
+        expect(result.bundle).toBeDefined();
+        expect(result.logger).toBeDefined();
+      });
 
-    expect(() => bootstrap(env)).toThrow(ConfigError);
-  });
+      it("parsedEnv is null and configError is a ConfigError", () => {
+        const result = bootstrap(env);
 
-  it("personal mode + missing KANBOARD_USERNAME → throws ConfigError", () => {
-    const env: NodeJS.ProcessEnv = {
-      ...PERSONAL_ENV,
-      KANBOARD_USERNAME: undefined,
-    };
+        expect(result.parsedEnv).toBeNull();
+        expect(result.configError).toBeInstanceOf(ConfigError);
+      });
 
-    expect(() => bootstrap(env)).toThrow(ConfigError);
-  });
+      it("registers all 37 tools (tools/list still works)", () => {
+        const registerToolSpy = vi.spyOn(McpServer.prototype, "registerTool");
 
-  it("invalid KANBOARD_AUTH_MODE → throws ConfigError", () => {
-    const env: NodeJS.ProcessEnv = {
-      ...PERSONAL_ENV,
-      KANBOARD_AUTH_MODE: "invalid-mode",
-    };
+        const result = bootstrap(env);
 
-    expect(() => bootstrap(env)).toThrow(ConfigError);
-  });
+        expect(registerToolSpy).toHaveBeenCalledTimes(37);
+        expect(result.server).toBeInstanceOf(McpServer);
+      });
+
+      it("a handler method call throws the ConfigError (deferred to call time)", () => {
+        const result = bootstrap(env);
+
+        expect(() =>
+          (result.bundle.handler as unknown as { getVersion: () => unknown }).getVersion(),
+        ).toThrow(ConfigError);
+      });
+
+      it("a resolver method call throws the ConfigError", () => {
+        const result = bootstrap(env);
+
+        expect(() =>
+          (
+            result.bundle.resolvers as unknown as {
+              resolveColumnIdByName: (p: number, n: string) => unknown;
+            }
+          ).resolveColumnIdByName(1, "Backlog"),
+        ).toThrow(ConfigError);
+      });
+    });
+  }
 });
 
 // ---------------------------------------------------------------------------
