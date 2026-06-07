@@ -86,10 +86,12 @@ interface UpdateTaskResult {
 export const updateTaskTool = {
   name: "update_task",
   description:
-    "Update an existing Kanboard task (partial update). " +
+    "Update the attributes of an existing Kanboard task (partial update). " +
+    "Only the fields you pass are changed; omitted fields keep their current values, " +
+    "and validation runs before any write, so an invalid call modifies nothing. " +
     "At least one field besides 'task_id' must be provided — otherwise VALIDATION_ERROR. " +
     "Column and swimlane changes must use move_task_position instead. " +
-    "Returns { ok: true } on success.",
+    "Returns { ok: true, task_id } on success.",
   inputSchema: UpdateTaskInput,
   handler: async (raw: unknown, deps: ToolDeps): Promise<UpdateTaskResult> => {
     const parsed = UpdateTaskInput.safeParse(raw);
