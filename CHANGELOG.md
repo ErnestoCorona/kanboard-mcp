@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.5] — 2026-06-07
+
+### Changed
+
+- **The server now serves `initialize` and `tools/list` without requiring valid Kanboard credentials (lazy credential validation).** MCP registries and inspectors (e.g. Glama) enumerate a server's tools by running it *without* the operator's secrets; previously the server exited at startup before registering any tool, so credential-less enumeration captured zero tools (Glama's API returned `tools: []`). Now, when credentials are missing or invalid, `bootstrap()` enters a degraded mode: it emits a prominent stderr warning, registers all 37 tools so `tools/list` works, and fails every tool **call** with a clear `CONFIG_ERROR` until the environment is fixed. Operators running with valid credentials see no change. (`BootstrapResult` gains `parsedEnv: ParsedEnv | null` and `configError: ConfigError | null`.)
+
+### Docs
+
+- Clarified the tool descriptions for `update_project`, `update_task`, and `update_subtask`: partial-update semantics (only the fields you pass change; validation runs before any write), routing to the correct tool for out-of-scope operations (e.g. `move_task_position`, `add_project_user` / `remove_project_user`, `create_column` / `move_column`, `delete_project`), and accurate return shapes (`{ ok: true, project_id }`, `{ ok: true, task_id }`, `{ subtask_id, task_id }`). No runtime behavior change.
+
+### Meta
+
+- Added `glama.json` declaring the repository maintainer, enabling Glama MCP registry ownership.
+
+Tool count remains 37. Test count is now 1002 (up from 982) with new degraded-mode coverage.
+
 ## [0.3.4] — 2026-05-19
 
 ### Fixed
