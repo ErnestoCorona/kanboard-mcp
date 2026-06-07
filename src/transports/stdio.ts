@@ -22,15 +22,20 @@ import { KANBOARD_MCP_VERSION } from "../shared/constants.js";
  * and block until the transport closes (stdin EOF, SIGINT, or SIGTERM).
  *
  * - Emits a startup banner to stderr (via pino) with version, node, target, mode.
+ *   In DEGRADED mode (missing / invalid credentials) it emits a degraded-mode
+ *   warning banner instead — never crashes, never writes to stdout.
  * - Handles SIGINT / SIGTERM gracefully by closing the transport before exiting.
  * - All logs go to **stderr** via pino — **stdout** is exclusively the MCP JSON-RPC channel.
- * - Boot errors (ConfigError from missing env vars) are propagated to the caller.
+ * - Does NOT reject for missing credentials: `bootstrap()` now defers that
+ *   `ConfigError` to tool-call time (lazy credential validation). Only genuinely
+ *   unexpected boot errors are propagated to the caller.
  *
  * Transport selection in v1 is HARDCODED to stdio. http.ts is a phase-3 placeholder.
  *
  * @param env - Process environment object (defaults to `process.env`).
  * @returns A promise that resolves when the transport closes.
- * @throws {ConfigError} when required env vars are missing or invalid.
+ * @throws Any genuinely unexpected error thrown by `bootstrap()` (NOT the
+ *   `ConfigError` for missing / invalid credentials — that is now deferred).
  *
  * @example
  * ```ts
@@ -40,20 +45,36 @@ import { KANBOARD_MCP_VERSION } from "../shared/constants.js";
  */
 export async function runStdio(env: NodeJS.ProcessEnv = process.env): Promise<void> {
   // 1. Bootstrap — loads env, wires handler, builds server, registers tools.
+  //    parsedEnv is null when running in DEGRADED mode (credentials missing).
   const { server, parsedEnv, logger } = bootstrap(env);
 
   // 2. Startup banner — all fields go to stderr via pino; no credential material.
   //    Format: kanboard-mcp v<x.y.z> | node v22 | target=<host> | mode=<personal|app>
-  logger.info(
-    {
-      name: "kanboard-mcp",
-      version: KANBOARD_MCP_VERSION,
-      node: process.version,
-      target: new URL(parsedEnv.url).host,
-      mode: parsedEnv.mode,
-    },
-    "starting stdio transport",
-  );
+  if (parsedEnv !== null) {
+    logger.info(
+      {
+        name: "kanboard-mcp",
+        version: KANBOARD_MCP_VERSION,
+        node: process.version,
+        target: new URL(parsedEnv.url).host,
+        mode: parsedEnv.mode,
+      },
+      "starting stdio transport",
+    );
+  } else {
+    // DEGRADED mode: no validated env to report. bootstrap() already logged the
+    // prominent credential warning; here we note the transport is starting in a
+    // listable-but-non-functional state. Still stderr-only (no stdout writes).
+    logger.warn(
+      {
+        name: "kanboard-mcp",
+        version: KANBOARD_MCP_VERSION,
+        node: process.version,
+        degraded: true,
+      },
+      "starting stdio transport in DEGRADED mode — tools are listable but every call will fail until credentials are fixed",
+    );
+  }
 
   // 3. Create the stdio transport.
   const transport = new StdioServerTransport();

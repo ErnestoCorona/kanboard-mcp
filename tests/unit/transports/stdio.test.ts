@@ -106,6 +106,7 @@ function setupDefaultMocks(): void {
       handler: {},
       resolvers: {},
     } as never,
+    configError: null,
   });
 
   // server.connect fires the transport's onclose immediately so the process
@@ -218,12 +219,16 @@ describe("runStdio — startup banner", () => {
 // ---------------------------------------------------------------------------
 
 describe("runStdio — error propagation", () => {
-  it("rejects with ConfigError when bootstrap throws ConfigError", async () => {
+  it("rejects with whatever bootstrap throws (genuinely unexpected errors)", async () => {
+    // Lazy credential validation: bootstrap() no longer throws ConfigError for
+    // missing creds (it degrades). But ANY error it DOES throw — e.g. a
+    // genuinely unexpected one — must still propagate through runStdio.
+    const unexpected = new ConfigError("simulated unexpected boot failure");
     mockBootstrap.mockImplementation(() => {
-      throw new ConfigError("KANBOARD_URL is required but was not set.");
+      throw unexpected;
     });
 
-    await expect(runStdio(PERSONAL_ENV)).rejects.toBeInstanceOf(ConfigError);
+    await expect(runStdio(PERSONAL_ENV)).rejects.toBe(unexpected);
   });
 
   it("rejects with the original error when server.connect rejects", async () => {
@@ -231,5 +236,61 @@ describe("runStdio — error propagation", () => {
     mockServer.connect.mockRejectedValue(connectError);
 
     await expect(runStdio(PERSONAL_ENV)).rejects.toBe(connectError);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// runStdio — degraded mode (bootstrap returns parsedEnv: null)
+// ---------------------------------------------------------------------------
+
+describe("runStdio — degraded mode banner", () => {
+  function setupDegradedMocks(): void {
+    mockBootstrap.mockReturnValue({
+      server: mockServer as never,
+      logger: mockLogger as never,
+      parsedEnv: null,
+      bundle: {
+        apiClient: {},
+        handler: {},
+        resolvers: {},
+      } as never,
+      configError: new ConfigError("KANBOARD_URL is required but was not set."),
+    });
+
+    mockServer.connect.mockImplementation(async (transport: MockTransport) => {
+      await Promise.resolve();
+      transport.onclose?.();
+    });
+  }
+
+  it("does NOT crash when parsedEnv is null — resolves cleanly", async () => {
+    setupDegradedMocks();
+
+    await expect(runStdio(PERSONAL_ENV)).resolves.toBeUndefined();
+  });
+
+  it("emits a degraded-mode warning banner (no parsedEnv.url dereference)", async () => {
+    setupDegradedMocks();
+
+    await runStdio(PERSONAL_ENV);
+
+    const warnCall = mockLogger.warn.mock.calls.find(
+      (call) =>
+        typeof call[0] === "object" &&
+        call[0] !== null &&
+        (call[0] as Record<string, unknown>)["degraded"] === true,
+    );
+    expect(warnCall, "degraded banner warn call not found").toBeDefined();
+    if (!warnCall) return;
+    expect(typeof warnCall[1]).toBe("string");
+    expect(String(warnCall[1])).toContain("DEGRADED");
+  });
+
+  it("still connects the transport in degraded mode", async () => {
+    setupDegradedMocks();
+
+    await runStdio(PERSONAL_ENV);
+
+    expect(mockServer.connect).toHaveBeenCalledOnce();
   });
 });
