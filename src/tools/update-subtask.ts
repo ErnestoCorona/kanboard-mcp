@@ -64,9 +64,12 @@ export const updateSubtaskTool = {
   name: "update_subtask",
   description:
     "Update an existing Kanboard subtask (partial update). " +
+    "Only the fields you pass are changed; omitted fields keep their current values, " +
+    "and validation runs before any write, so an invalid call modifies nothing. " +
     "Both 'subtask_id' and 'task_id' are required as identity fields. " +
     "At least one of title, status, user_id, time_estimated, or time_spent must also be provided. " +
-    "Status: 0 = todo, 1 = in progress, 2 = done.",
+    "Status: 0 = todo, 1 = in progress, 2 = done. " +
+    "Returns { subtask_id, task_id } on success.",
   inputSchema: UpdateSubtaskInput,
   handler: async (raw: unknown, deps: ToolDeps): Promise<UpdateSubtaskResult> => {
     const parsed = UpdateSubtaskInput.safeParse(raw);

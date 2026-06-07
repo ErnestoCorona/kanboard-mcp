@@ -82,9 +82,14 @@ interface UpdateProjectResult {
 export const updateProjectTool = {
   name: "update_project",
   description:
-    "Update an existing Kanboard project (partial update). " +
+    "Update the attributes of an existing Kanboard project (partial update). " +
+    "Only the fields you pass are changed; omitted fields keep their current values, " +
+    "and validation runs before any write, so an invalid call modifies nothing. " +
     "At least one field besides 'project_id' must be provided — otherwise VALIDATION_ERROR. " +
-    "Returns { ok: true } on success.",
+    "This tool updates project attributes only: to manage members use add_project_user / " +
+    "remove_project_user, to manage columns use create_column / move_column, and to delete " +
+    "a project use delete_project. " +
+    "Returns { ok: true, project_id } on success.",
   inputSchema: UpdateProjectInput,
   handler: async (raw: unknown, deps: ToolDeps): Promise<UpdateProjectResult> => {
     const parsed = UpdateProjectInput.safeParse(raw);
