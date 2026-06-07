@@ -56,6 +56,7 @@ export const moveColumnTool = {
   description:
     "Reorder a column on the Kanboard project board. " +
     "Provide column_id and the new 1-based position (required — no default). " +
+    "Only ordering changes — to rename a column or change its WIP limit use update_column. " +
     "Returns { ok: true, column_id, position } on success.",
   inputSchema: MoveColumnInput,
   handler: async (raw: unknown, deps: ToolDeps): Promise<MoveColumnResult> => {

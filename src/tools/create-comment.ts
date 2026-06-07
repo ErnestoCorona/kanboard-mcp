@@ -60,8 +60,8 @@ export const createCommentTool = {
   name: "create_comment",
   description:
     "Create a comment on a Kanboard task. " +
-    "The comment author is automatically set to the authenticated user (via getMe() cache). " +
-    "Do NOT pass user_id — it is injected server-side. " +
+    "The comment author is automatically set to the authenticated user (via getMe() cache); do NOT pass user_id — it is injected server-side. " +
+    "To edit a comment's body use update_comment; to remove one use delete_comment. " +
     "Returns { comment_id } on success.",
   inputSchema: CreateCommentInput,
   handler: async (raw: unknown, deps: ToolDeps): Promise<CreateCommentResult> => {

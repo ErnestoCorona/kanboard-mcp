@@ -57,6 +57,7 @@ export const updateCommentTool = {
   name: "update_comment",
   description:
     "Update the body of an existing Kanboard comment. " +
+    "To remove a comment use delete_comment instead. " +
     "Returns { ok: true, comment_id } on success.",
   inputSchema: UpdateCommentInput,
   handler: async (raw: unknown, deps: ToolDeps): Promise<UpdateCommentResult> => {

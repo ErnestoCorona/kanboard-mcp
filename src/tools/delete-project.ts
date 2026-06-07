@@ -58,8 +58,9 @@ interface DeleteProjectResult {
 export const deleteProjectTool = {
   name: "delete_project",
   description:
-    "Permanently delete a Kanboard project (and all its tasks, columns, swimlanes). " +
-    "DESTRUCTIVE — requires explicit `confirm: true`. " +
+    "Permanently delete a Kanboard project and all its tasks, columns, and swimlanes. " +
+    "DESTRUCTIVE and irreversible — requires explicit `confirm: true`. " +
+    "To remove only a member use remove_project_user; to edit project attributes use update_project. " +
     "Returns { ok: true, project_id } on success.",
   inputSchema: DeleteProjectInput,
   handler: async (raw: unknown, deps: ToolDeps): Promise<DeleteProjectResult> => {

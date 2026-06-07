@@ -64,8 +64,9 @@ export const updateSwimlaneTool = {
   name: "update_swimlane",
   description:
     "Update an existing Kanboard swimlane (partial update). " +
+    "Only the fields you pass are changed; omitted fields keep their current values, and validation runs before any write, so an invalid call modifies nothing. " +
     "At least one field besides 'swimlane_id' must be provided — otherwise VALIDATION_ERROR. " +
-    "NOT for reordering — use move_swimlane instead. " +
+    "NOT for reordering — use move_swimlane instead; to delete a swimlane use delete_swimlane. " +
     "Returns { ok: true, swimlane_id } on success.",
   inputSchema: UpdateSwimlaneInput,
   handler: async (raw: unknown, deps: ToolDeps): Promise<UpdateSwimlaneResult> => {

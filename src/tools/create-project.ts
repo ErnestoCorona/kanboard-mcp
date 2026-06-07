@@ -71,6 +71,7 @@ export const createProjectTool = {
     "Create a new Kanboard project. Requires a name (1–255 chars). " +
     "Optionally provide a description, short identifier, owner user id, " +
     "start_date / end_date (ISO 8601 string or epoch seconds), and email. " +
+    "After creating, adjust the board with create_column / create_swimlane, add members with add_project_user, and edit attributes with update_project. " +
     "Returns { project_id } on success.",
   inputSchema: CreateProjectInput,
   handler: async (raw: unknown, deps: ToolDeps): Promise<CreateProjectResult> => {

@@ -61,7 +61,7 @@ interface DeleteTaskResult {
 export const deleteTaskTool = {
   name: "delete_task",
   description:
-    "Permanently delete a Kanboard task. DESTRUCTIVE — requires explicit `confirm: true`. " +
+    "Permanently delete a Kanboard task. DESTRUCTIVE and irreversible — requires explicit `confirm: true`. " +
     "Returns { ok: true, task_id } on success.",
   inputSchema: DeleteTaskInput,
   handler: async (raw: unknown, deps: ToolDeps): Promise<DeleteTaskResult> => {

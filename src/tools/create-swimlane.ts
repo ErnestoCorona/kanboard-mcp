@@ -63,6 +63,7 @@ export const createSwimlaneTool = {
   description:
     "Add a swimlane to a Kanboard project. " +
     "Project resolved from explicit project_id/project_identifier or .kanboard.yaml. " +
+    "To reorder it use move_swimlane, to rename it use update_swimlane, to remove it use delete_swimlane. " +
     "Returns { swimlane_id } on success.",
   inputSchema: CreateSwimlaneInput,
   handler: async (raw: unknown, deps: ToolDeps): Promise<CreateSwimlaneResult> => {
