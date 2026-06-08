@@ -196,6 +196,32 @@ describe("getMe lifecycle", () => {
     const id = await handler.getMeId();
     expect(id).toBe(1);
   });
+
+  // Regression — Glama Docker introspection crash. When the server is run for
+  // introspection only (`initialize` + `tools/list`, never a tool call) against
+  // unreachable placeholder credentials, NOTHING ever awaits getMe(). That
+  // never-awaited rejection must NOT bubble up as an unhandledRejection and
+  // terminate the process (Node ≥15 default), which is what made Glama report
+  // "Not connected".
+  it("does NOT emit unhandledRejection when a failed getMe() is never awaited", async () => {
+    const rejections: unknown[] = [];
+    const onUnhandled = (reason: unknown): void => {
+      rejections.push(reason);
+    };
+    process.on("unhandledRejection", onUnhandled);
+
+    try {
+      // getMe() rejects in the ctor; deliberately never await handler.getMe().
+      buildHandler([new Error("getaddrinfo ENOTFOUND kanboard.example.com")]);
+
+      // Let the rejected background promise settle and any event fire.
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(rejections).toHaveLength(0);
+    } finally {
+      process.off("unhandledRejection", onUnhandled);
+    }
+  });
 });
 
 // ---------------------------------------------------------------------------
