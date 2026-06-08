@@ -56,10 +56,23 @@ jobs:
           fetch-depth: 0
 
       - name: Install gitleaks
+        env:
+          GITLEAKS_VERSION: 8.24.3
         run: |
-          curl -sSL https://github.com/zricethezav/gitleaks/releases/download/v8.24.3/gitleaks_8.24.3_linux_x64.tar.gz \
-            | tar -xz -C /usr/local/bin gitleaks
+          set -euo pipefail
+          # Canonical org is gitleaks/gitleaks — the old zricethezav/gitleaks
+          # release-asset redirects now 504 persistently after the org move.
+          url="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          # Download to a FILE (not piped into tar) with fail-on-error + retries.
+          # A piped `curl | tar` feeds a transient CDN error body — e.g. a
+          # rate-limited release-asset response — straight into tar, which then
+          # dies with a confusing "not in gzip format" and flakes the whole job.
+          # -f fails on HTTP errors, --retry survives blips, and extracting from
+          # a file surfaces a clear error instead of a broken pipe.
+          curl -fSL --retry 5 --retry-delay 3 --retry-all-errors -o /tmp/gitleaks.tar.gz "$url"
+          tar -xzf /tmp/gitleaks.tar.gz -C /usr/local/bin gitleaks
           chmod +x /usr/local/bin/gitleaks
+          gitleaks version
 
       - name: Run gitleaks
         run: gitleaks detect --redact --verbose --exit-code 1
