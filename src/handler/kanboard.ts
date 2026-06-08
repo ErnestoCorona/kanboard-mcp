@@ -226,6 +226,17 @@ export class KanboardHandler {
     this.#logger = opts.logger ?? createLogger();
     // Kick off getMe eagerly — non-fatal at ctor time.
     this.#getMePromise = this.#initGetMe();
+    // Guard the eager promise so a NEVER-awaited rejection can't crash the
+    // process. Node ≥15 terminates on an unhandled rejection by default. The
+    // failure is still surfaced LAZILY to the first `await getMe()` caller
+    // (which attaches its own handler), but a registry that only runs
+    // `initialize` + `tools/list` — e.g. Glama's Docker introspection with
+    // unreachable placeholder credentials — never awaits it. Without this no-op
+    // handler that background rejection is "unhandled" and kills the server
+    // mid-introspect, which is exactly the "eager-but-non-fatal" contract above.
+    void this.#getMePromise.catch(() => {
+      /* surfaced on demand via getMe(); swallowed here to stay non-fatal */
+    });
   }
 
   // ─── getMe cache ──────────────────────────────────────────────────────────
