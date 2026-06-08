@@ -2,7 +2,7 @@
  * Shared bootstrap factory for all transport layers.
  *
  * `bootstrap()` loads all configuration, constructs the KanboardHandler bundle,
- * builds an MCP `McpServer`, and registers all 37 tools. Each transport (stdio,
+ * builds an MCP `McpServer`, and registers all 39 tools. Each transport (stdio,
  * and the future HTTP transport) calls this once at startup.
  *
  * Transport-agnostic: does NOT bind any transport. Only constructs and wires
@@ -40,7 +40,7 @@ import { registerTools } from "../tools/index.js";
  * logger/parsedEnv (for the startup banner and process lifecycle).
  */
 export interface BootstrapResult {
-  /** Configured MCP server with all 37 tools registered. Ready to connect. */
+  /** Configured MCP server with all 39 tools registered. Ready to connect. */
   server: McpServer;
   /**
    * Handler layer bundle: apiClient + handler + resolvers.
@@ -71,7 +71,7 @@ export interface BootstrapResult {
 
 /**
  * Load configuration, build the handler bundle, create an `McpServer`, and
- * register all 37 Kanboard tools.
+ * register all 39 Kanboard tools.
  *
  * Order of operations (normal path):
  * 1. `loadEnv(env)` — validates env vars, throws `ConfigError` on failure.
@@ -79,7 +79,7 @@ export interface BootstrapResult {
  * 3. `createHandler(parsedEnv, { logger })` — wires ApiClient + KanboardHandler
  *    + Resolvers. The KanboardConfig portion is projected from ParsedEnv.
  * 4. `new McpServer(...)` — creates a bare MCP server.
- * 5. `registerTools(server, deps)` — mounts all 37 tools on the server.
+ * 5. `registerTools(server, deps)` — mounts all 39 tools on the server.
  * 6. Returns `{ server, bundle, logger, parsedEnv, configError: null }`.
  *
  * Degraded path: when step 1 throws a `ConfigError` (missing / invalid creds),
@@ -147,7 +147,7 @@ export function bootstrap(env: NodeJS.ProcessEnv = process.env): BootstrapResult
     version: KANBOARD_MCP_VERSION,
   });
 
-  // 5. Register all 37 tools on the server.
+  // 5. Register all 39 tools on the server.
   registerTools(server, {
     handler: bundle.handler,
     resolvers: bundle.resolvers,

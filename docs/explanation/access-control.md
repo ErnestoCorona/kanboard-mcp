@@ -14,7 +14,7 @@ If you can't see project #42 when you log into Kanboard as Maria, then Maria's p
 
 ## How a tool call gets authorized
 
-The flow is the same for every one of the 37 tools:
+The flow is the same for every one of the 39 tools:
 
 ```
 MCP client → kanboard-mcp → Kanboard JSON-RPC API
@@ -93,7 +93,7 @@ Pino structured logging redacts `apiToken`, `req.headers.authorization`, and `cr
 
 ### "Can I restrict which tools a user can call?"
 
-Not at the MCP layer. The 37 tools are exposed to anyone with a valid token. What each tool *does* when invoked is gated by Kanboard's ACL — so a user without write access to project #42 will get a clean permission error from `update_task`, but the tool itself remains listed.
+Not at the MCP layer. The 39 tools are exposed to anyone with a valid token. What each tool *does* when invoked is gated by Kanboard's ACL — so a user without write access to project #42 will get a clean permission error from `update_task`, but the tool itself remains listed.
 
 If you need tool-level restriction (e.g. "this agent can read but not write"), the right place to enforce it is upstream of the MCP — at the agent / client level — or with a Kanboard user whose role doesn't include the relevant permissions in the first place.
 

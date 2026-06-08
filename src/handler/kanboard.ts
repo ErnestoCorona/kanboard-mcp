@@ -1124,4 +1124,21 @@ export class KanboardHandler {
     this.#logger.debug({ method: "closeTask" }, "closeTask OK");
     decodeMutation("closeTask", raw);
   }
+
+  /**
+   * Reopens a task (sets `is_active` to 1 in Kanboard).
+   *
+   * The inverse of {@link closeTask}: restores a previously closed task to the
+   * active board without altering anything else. Kanboard exposes a dedicated
+   * `openTask` JSON-RPC method on standard installs — this handler calls it
+   * directly.
+   *
+   * Wire param is `task_id`.
+   * @throws {KanboardApiError} when Kanboard returns false (e.g. method not exposed).
+   */
+  public async openTask(taskId: number): Promise<void> {
+    const raw = await this.#apiClient.call("openTask", { task_id: taskId });
+    this.#logger.debug({ method: "openTask" }, "openTask OK");
+    decodeMutation("openTask", raw);
+  }
 }

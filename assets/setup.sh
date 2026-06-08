@@ -72,5 +72,5 @@ sleep 1.1
 
 # --- Done -------------------------------------------------------------------
 say ""
-say "${BOLD}Done${RESET} — restart your client and the ${BOLD}${MAGENTA}37 tools${RESET} are live."
+say "${BOLD}Done${RESET} — restart your client and the ${BOLD}${MAGENTA}39 tools${RESET} are live."
 sleep 2.0

@@ -36,6 +36,7 @@ import type { Resolvers } from "../handler/resolvers.js";
 
 import { addProjectUserTool } from "./add-project-user.js";
 import { attachFileToTaskTool } from "./attach-file-to-task.js";
+import { closeTaskTool } from "./close-task.js";
 import { createColumnTool } from "./create-column.js";
 import { createCommentTool } from "./create-comment.js";
 import { createProjectTool } from "./create-project.js";
@@ -65,6 +66,7 @@ import { moveColumnTool } from "./move-column.js";
 import { moveSwimlaneTool } from "./move-swimlane.js";
 import { moveTaskPositionTool } from "./move-task-position.js";
 import { removeProjectUserTool } from "./remove-project-user.js";
+import { reopenTaskTool } from "./reopen-task.js";
 import { updateColumnTool } from "./update-column.js";
 import { updateCommentTool } from "./update-comment.js";
 import { updateProjectTool } from "./update-project.js";
@@ -78,6 +80,7 @@ import { updateTaskTool } from "./update-task.js";
 
 export { addProjectUserTool } from "./add-project-user.js";
 export { attachFileToTaskTool } from "./attach-file-to-task.js";
+export { closeTaskTool } from "./close-task.js";
 export { createColumnTool } from "./create-column.js";
 export { createCommentTool } from "./create-comment.js";
 export { createProjectTool } from "./create-project.js";
@@ -107,6 +110,7 @@ export { moveColumnTool } from "./move-column.js";
 export { moveSwimlaneTool } from "./move-swimlane.js";
 export { moveTaskPositionTool } from "./move-task-position.js";
 export { removeProjectUserTool } from "./remove-project-user.js";
+export { reopenTaskTool } from "./reopen-task.js";
 export { updateColumnTool } from "./update-column.js";
 export { updateCommentTool } from "./update-comment.js";
 export { updateProjectTool } from "./update-project.js";
@@ -151,7 +155,7 @@ export interface ToolDef {
 // ---------------------------------------------------------------------------
 
 /**
- * All 37 Kanboard MCP tools in alphabetical order.
+ * All 39 Kanboard MCP tools in alphabetical order.
  *
  * Order is fixed so that any slice/comparison in tests and transports is
  * deterministic across environments.
@@ -159,6 +163,7 @@ export interface ToolDef {
 export const allTools: readonly ToolDef[] = [
   addProjectUserTool,
   attachFileToTaskTool,
+  closeTaskTool,
   createColumnTool,
   createCommentTool,
   createProjectTool,
@@ -188,6 +193,7 @@ export const allTools: readonly ToolDef[] = [
   moveSwimlaneTool,
   moveTaskPositionTool,
   removeProjectUserTool,
+  reopenTaskTool,
   updateColumnTool,
   updateCommentTool,
   updateProjectTool,
