@@ -7,9 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.6] — 2026-06-08
+
 ### Added
 
 - **`close_task` and `reopen_task` tools** — close (archive, is_active=0) an active task off the board without deleting it, and reopen (is_active=1) a closed task. Reversible, so neither requires `confirm: true`. Tool count is now 39.
+
+### Fixed
+
+- **The server no longer crashes during credential-less introspection when placeholder credentials are _present but unreachable_.** The `KanboardHandler` constructor fires `getMe()` eagerly ("eager-but-non-fatal"): the failure is meant to surface lazily on the first `await getMe()`. But a registry that runs the server for introspection only (`initialize` + `tools/list`, never a tool call) never awaits it, so the rejected background promise was _unhandled_ — and Node ≥15 terminates the process by default. This is why Glama's Docker introspection failed with `Not connected`: with present-but-unreachable placeholder credentials (`KANBOARD_URL` → `ENOTFOUND`), `bootstrap()` takes the full path (degraded mode only triggers on _absent_ credentials), `getMe()` fires and rejects, and the server died mid-introspect. v0.3.5's lazy credential validation covered only the missing-creds path. The constructor now attaches a no-op `.catch()` to the stored promise so the background rejection is handled (no crash) while `getMe()` callers still receive the same promise and get the `AuthError` lazily. A regression test asserts no `unhandledRejection` fires when a failed `getMe()` is never awaited.
+
+### Docs
+
+- Clarified tool descriptions, routing hints, and accurate return shapes across 21 tools (round 2): `create_*`, `update_*`, `delete_*`, `move_*`, `add_project_user`, `list_my_tasks`, and others. No runtime behavior change.
 
 ## [0.3.5] — 2026-06-07
 
