@@ -64,11 +64,12 @@ interface MoveTaskPositionResult {
 export const moveTaskPositionTool = {
   name: "move_task_position",
   description:
-    "Move a Kanboard task to a different column, position, or swimlane. " +
+    "Move a Kanboard task to a different column, position, or swimlane — this is the only way to change a task's board placement. " +
     "Provide exactly one of column_id or column_name (column_name is resolved case-insensitively). " +
     "If swimlane_id is omitted, it is resolved from .kanboard.yaml or the first active swimlane. " +
     "Project is resolved from explicit project_id or project_identifier, or from .kanboard.yaml. " +
-    "Returns { ok: true } on success.",
+    "To change other task attributes (title, dates, owner) use update_task instead. " +
+    "Returns { ok: true, task_id, column_id, swimlane_id, position } on success.",
   inputSchema: MoveTaskPositionInput,
   handler: async (raw: unknown, deps: ToolDeps): Promise<MoveTaskPositionResult> => {
     const parsed = MoveTaskPositionInput.safeParse(raw);

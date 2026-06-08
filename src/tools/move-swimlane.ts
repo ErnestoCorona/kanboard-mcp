@@ -56,6 +56,7 @@ export const moveSwimlaneTool = {
   description:
     "Reorder a swimlane within a Kanboard project. " +
     "Provide swimlane_id and the new 1-based position (required — no default). " +
+    "Only ordering changes — to rename a swimlane use update_swimlane. " +
     "Returns { ok: true, swimlane_id, position } on success.",
   inputSchema: MoveSwimlaneInput,
   handler: async (raw: unknown, deps: ToolDeps): Promise<MoveSwimlaneResult> => {

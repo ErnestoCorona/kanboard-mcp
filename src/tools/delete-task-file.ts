@@ -58,7 +58,8 @@ export const deleteTaskFileTool = {
   name: "delete_task_file",
   description:
     "Permanently delete a file attachment from a Kanboard task. " +
-    "DESTRUCTIVE — requires explicit `confirm: true`. " +
+    "DESTRUCTIVE and irreversible — requires explicit `confirm: true`. " +
+    "To add an attachment use attach_file_to_task. " +
     "Returns { ok: true, file_id } on success.",
   inputSchema: DeleteTaskFileInput,
   handler: async (raw: unknown, deps: ToolDeps): Promise<DeleteTaskFileResult> => {

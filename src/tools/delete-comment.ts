@@ -57,7 +57,8 @@ interface DeleteCommentResult {
 export const deleteCommentTool = {
   name: "delete_comment",
   description:
-    "Permanently delete a Kanboard comment. DESTRUCTIVE — requires explicit `confirm: true`. " +
+    "Permanently delete a Kanboard comment. DESTRUCTIVE and irreversible — requires explicit `confirm: true`. " +
+    "To edit a comment's text instead of deleting it use update_comment. " +
     "Returns { ok: true, comment_id } on success.",
   inputSchema: DeleteCommentInput,
   handler: async (raw: unknown, deps: ToolDeps): Promise<DeleteCommentResult> => {

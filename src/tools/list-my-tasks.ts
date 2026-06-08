@@ -61,7 +61,8 @@ export const listMyTasksTool = {
     "List open tasks assigned to the currently authenticated user in the resolved project. " +
     "Requires a project_id (explicit or from .kanboard.yaml). " +
     "Uses Kanboard search query: assignee:me status:open. " +
-    "In app mode (jsonrpc user) returns tasks assigned to the jsonrpc system user.",
+    "In app mode (jsonrpc user) returns tasks assigned to the jsonrpc system user. " +
+    "Returns { tasks } on success.",
   inputSchema: ListMyTasksInput,
   handler: async (raw: unknown, deps: ToolDeps): Promise<ListMyTasksResult> => {
     const input = ListMyTasksInput.parse(raw);

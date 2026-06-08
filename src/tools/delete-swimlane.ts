@@ -63,7 +63,8 @@ interface DeleteSwimlaneResult {
 export const deleteSwimlaneTool = {
   name: "delete_swimlane",
   description:
-    "Permanently delete a Kanboard swimlane. DESTRUCTIVE — requires explicit `confirm: true`. " +
+    "Permanently delete a Kanboard swimlane from a project. DESTRUCTIVE and irreversible — requires explicit `confirm: true`. " +
+    "To rename a swimlane use update_swimlane; to reorder it use move_swimlane. " +
     "Returns { ok: true, swimlane_id } on success.",
   inputSchema: DeleteSwimlaneInput,
   handler: async (raw: unknown, deps: ToolDeps): Promise<DeleteSwimlaneResult> => {

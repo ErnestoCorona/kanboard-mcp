@@ -67,7 +67,8 @@ export const createTaskTool = {
     "Create a new task in a Kanboard project. " +
     "Project is resolved from explicit project_id or project_identifier, or from .kanboard.yaml. " +
     "Optional fields (column_id, owner_id, category_id, swimlane_id) fall back to .kanboard.yaml defaults when not provided. " +
-    "Returns { task_id } on success.",
+    "To create many tasks at once use create_tasks_batch; to move the task afterward use move_task_position. " +
+    "Returns { task_id, project_id } on success.",
   inputSchema: CreateTaskInput,
   handler: async (raw: unknown, deps: ToolDeps): Promise<CreateTaskResult> => {
     const input = CreateTaskInput.parse(raw);

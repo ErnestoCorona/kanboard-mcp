@@ -56,8 +56,9 @@ export const createSubtaskTool = {
   name: "create_subtask",
   description:
     "Create a subtask under an existing Kanboard task. " +
-    "Returns { subtask_id } on success. " +
-    "Status: 0 = todo (default), 1 = in progress, 2 = done.",
+    "Status: 0 = todo (default), 1 = in progress, 2 = done. " +
+    "To list a task's subtasks use list_subtasks; to edit one use update_subtask. " +
+    "Returns { subtask_id, task_id } on success.",
   inputSchema: CreateSubtaskInput,
   handler: async (raw: unknown, deps: ToolDeps): Promise<CreateSubtaskResult> => {
     const input = CreateSubtaskInput.parse(raw);

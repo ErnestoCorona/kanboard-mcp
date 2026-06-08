@@ -60,7 +60,8 @@ export const addProjectUserTool = {
   description:
     "Add a user to a Kanboard project with the given role. " +
     "Role defaults to 'project-member' if not specified. " +
-    "Use list_project_users to find user ids and list_projects to find project ids.",
+    "Use list_project_users to find user ids and list_projects to find project ids; to unlink a member use remove_project_user. " +
+    "Returns { user_id, project_id, role } on success.",
   inputSchema: AddProjectUserInput,
   handler: async (raw: unknown, deps: ToolDeps): Promise<AddProjectUserResult> => {
     const input = AddProjectUserInput.parse(raw);

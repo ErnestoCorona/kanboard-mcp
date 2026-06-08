@@ -57,7 +57,8 @@ interface DeleteSubtaskResult {
 export const deleteSubtaskTool = {
   name: "delete_subtask",
   description:
-    "Permanently delete a Kanboard subtask. DESTRUCTIVE — requires explicit `confirm: true`. " +
+    "Permanently delete a Kanboard subtask. DESTRUCTIVE and irreversible — requires explicit `confirm: true`. " +
+    "To mark a subtask done instead of deleting it, set status=2 via update_subtask. " +
     "Returns { ok: true, subtask_id } on success.",
   inputSchema: DeleteSubtaskInput,
   handler: async (raw: unknown, deps: ToolDeps): Promise<DeleteSubtaskResult> => {

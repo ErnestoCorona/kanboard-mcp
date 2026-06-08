@@ -64,7 +64,8 @@ interface DeleteColumnResult {
 export const deleteColumnTool = {
   name: "delete_column",
   description:
-    "Permanently delete a Kanboard column. DESTRUCTIVE — requires explicit `confirm: true`. " +
+    "Permanently delete a Kanboard column from a project board. DESTRUCTIVE and irreversible — requires explicit `confirm: true`. " +
+    "To rename a column or change its WIP limit use update_column; to reorder it use move_column. " +
     "Returns { ok: true, column_id } on success.",
   inputSchema: DeleteColumnInput,
   handler: async (raw: unknown, deps: ToolDeps): Promise<DeleteColumnResult> => {

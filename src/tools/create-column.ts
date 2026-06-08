@@ -69,6 +69,7 @@ export const createColumnTool = {
   description:
     "Add a column to a Kanboard project board. " +
     "Project resolved from explicit project_id/project_identifier or .kanboard.yaml. " +
+    "To reorder it use move_column, to rename or change its WIP limit use update_column, to remove it use delete_column. " +
     "Returns { column_id } on success.",
   inputSchema: CreateColumnInput,
   handler: async (raw: unknown, deps: ToolDeps): Promise<CreateColumnResult> => {

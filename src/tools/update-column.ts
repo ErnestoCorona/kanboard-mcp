@@ -70,9 +70,10 @@ export const updateColumnTool = {
   name: "update_column",
   description:
     "Update an existing Kanboard column (partial update). " +
+    "Only the fields you pass are changed; omitted fields keep their current values, and validation runs before any write, so an invalid call modifies nothing. " +
     "At least one field besides 'column_id' must be provided — otherwise VALIDATION_ERROR. " +
-    "NOT for reordering — use move_column instead. " +
-    "Returns { ok: true } on success.",
+    "NOT for reordering — use move_column instead; to delete a column use delete_column. " +
+    "Returns { ok: true, column_id } on success.",
   inputSchema: UpdateColumnInput,
   handler: async (raw: unknown, deps: ToolDeps): Promise<UpdateColumnResult> => {
     const parsed = UpdateColumnInput.safeParse(raw);
